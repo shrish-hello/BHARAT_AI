@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BHARAT AI 🇮🇳</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f7fb;
+    color: #202124;
+}
+
+.header {
+    height: 70px;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    padding: 0 25px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.tagline {
+    margin-left: 15px;
+    color: #777;
+    font-size: 14px;
+}
+
+.chat {
+    max-width: 900px;
+    margin: auto;
+    padding: 30px 20px 150px;
+}
+
+.welcome {
+    text-align: center;
+    margin-top: 70px;
+}
+
+.welcome h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.welcome p {
+    color: #666;
+    font-size: 17px;
+}
+
+.message {
+    margin: 20px 0;
+    padding: 18px;
+    border-radius: 15px;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.user {
+    background: #e8f0fe;
+    margin-left: 15%;
+}
+
+.ai {
+    background: white;
+    border: 1px solid #e2e2e2;
+    margin-right: 15%;
+}
+
+.label {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+.input-area {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255,255,255,0.96);
+    border-top: 1px solid #ddd;
+    padding: 15px;
+}
+
+.input-box {
+    max-width: 900px;
+    margin: auto;
+    display: flex;
+    gap: 10px;
+}
+
+textarea {
+    flex: 1;
+    resize: none;
+    height: 55px;
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    padding: 15px;
+    font-size: 16px;
+    outline: none;
+}
+
+textarea:focus {
+    border-color: #4285f4;
+}
+
+button {
+    width: 110px;
+    border: none;
+    border-radius: 15px;
+    background: #1a73e8;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1557b0;
+}
+
+button:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+}
+
+.typing {
+    color: #777;
+    font-style: italic;
+}
+
+@media(max-width:600px) {
+    .tagline {
+        display: none;
+    }
+
+    .welcome h1 {
+        font-size: 32px;
+    }
+
+    .user,
+    .ai {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .input-box {
+        padding: 0 5px;
+    }
+
+    button {
+        width: 85px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <div class="logo">🇮🇳 BHARAT AI</div>
+    <div class="tagline">India-first AI Tutor</div>
+</div>
+
+<div class="chat" id="chat">
+
+    <div class="welcome" id="welcome">
+        <h1>🇮🇳 BHARAT AI</h1>
+        <p>Learn • Understand • Grow</p>
+        <p>Ask your question in English, Hindi or Hinglish.</p>
+    </div>
+
+</div>
+
+<div class="input-area">
+    <div class="input-box">
+        <textarea
+            id="question"
+            placeholder="Ask BHARAT AI anything..."
+            onkeydown="handleKey(event)"
+        ></textarea>
+
+        <button id="sendButton" onclick="askAI()">Send</button>
+    </div>
+</div>
+
+<script>
+
+async function askAI() {
+
+    const input = document.getElementById("question");
+    const button = document.getElementById("sendButton");
+    const chat = document.getElementById("chat");
+    const welcome = document.getElementById("welcome");
+
+    const question = input.value.trim();
+
+    if (!question) {
+        return;
+    }
+
+    welcome.style.display = "none";
+
+    const userMessage = document.createElement("div");
+    userMessage.className = "message user";
+    userMessage.innerHTML =
+        '<div class="label">You</div>' +
+        escapeHTML(question);
+
+    chat.appendChild(userMessage);
+
+    input.value = "";
+    button.disabled = true;
+    button.textContent = "Thinking...";
+
+    const aiMessage = document.createElement("div");
+    aiMessage.className = "message ai";
+    aiMessage.innerHTML =
+        '<div class="label">🇮🇳 BHARAT AI</div>' +
+        '<div class="typing">Thinking...</div>';
+
+    chat.appendChild(aiMessage);
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+    });
+
+    try {
+
+        const response = await fetch("/ask", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                question: question
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.answer || "Server error");
+        }
+
+        aiMessage.innerHTML =
+            '<div class="label">🇮🇳 BHARAT AI</div>' +
+            escapeHTML(data.answer);
+
+    } catch (error) {
+
+        aiMessage.innerHTML =
+            '<div class="label">🇮🇳 BHARAT AI</div>' +
+            'Sorry, something went wrong. Please make sure BHARAT AI and Ollama are running.';
+
+        console.error(error);
+
+    }
+
+    button.disabled = false;
+    button.textContent = "Send";
+
+    input.focus();
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+    });
+}
+
+function handleKey(event) {
+
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        askAI();
+    }
+}
+
+function escapeHTML(text) {
+
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+</script>
+
+</body>
+</html>
