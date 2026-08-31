@@ -18,8 +18,11 @@ if not api_key:
 
 client = genai.Client(api_key=api_key)
 
-PRIMARY_MODEL = "gemini-3.7-flash"
-FALLBACK_MODEL = "gemini-2.5-flash"
+MODELS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash"
+]
 
 uploaded_text = ""
 
@@ -31,135 +34,129 @@ def read_file(path):
         try:
             with open(path, "r", encoding="utf-8", errors="ignore") as f:
                 return f.read()
-        except Exception:
+        except Exception as e:
+            print("TXT READ ERROR:", repr(e), flush=True)
             return ""
 
     if name.endswith(".pdf"):
         try:
             from pypdf import PdfReader
             reader = PdfReader(path)
-            return "\n".join(
-                page.extract_text() or ""
-                for page in reader.pages
-            )
-        except Exception:
+            pages = []
+
+            for page in reader.pages:
+                text = page.extract_text() or ""
+                pages.append(text)
+
+            return "\n".join(pages)
+        except Exception as e:
+            print("PDF READ ERROR:", repr(e), flush=True)
             return ""
 
     if name.endswith(".docx"):
         try:
             from docx import Document
             doc = Document(path)
-            return "\n".join(
-                paragraph.text
-                for paragraph in doc.paragraphs
-            )
-        except Exception:
+            return "\n".join(p.text for p in doc.paragraphs)
+        except Exception as e:
+            print("DOCX READ ERROR:", repr(e), flush=True)
             return ""
 
     return ""
 
 
-def is_temporary_error(error):
-    text = str(error).lower()
+def is_retryable_error(error):
+    message = str(error).lower()
 
-    temporary_codes = [
+    retry_words = [
         "503",
-        "429",
-        "500",
-        "service unavailable",
         "unavailable",
+        "overloaded",
         "high demand",
-        "resource exhausted",
-        "rate limit",
         "temporarily",
-        "overloaded"
+        "429",
+        "rate limit",
+        "resource exhausted",
+        "deadline",
+        "timeout",
+        "timed out",
+        "internal error",
+        "500"
     ]
 
-    return any(code in text for code in temporary_codes)
+    return any(word in message for word in retry_words)
 
 
-def generate_with_retry(prompt):
-    primary_attempts = 3
-    delays = [2, 4, 8]
+def is_auth_error(error):
+    message = str(error).lower()
 
+    auth_words = [
+        "401",
+        "403",
+        "unauthorized",
+        "permission denied",
+        "api key",
+        "invalid api key",
+        "authentication"
+    ]
+
+    return any(word in message for word in auth_words)
+
+
+def generate_answer(prompt):
     last_error = None
 
-    for attempt in range(primary_attempts):
-        try:
-            print(
-                f"Calling primary model "
-                f"{PRIMARY_MODEL} - attempt {attempt + 1}/{primary_attempts}"
-            )
-
-            response = client.models.generate_content(
-                model=PRIMARY_MODEL,
-                contents=prompt
-            )
-
-            if response and response.text:
-                print("Primary model succeeded.")
-                return response.text
-
-            raise RuntimeError("Primary model returned an empty response.")
-
-        except Exception as error:
-            last_error = error
-
-            print(
-                f"Primary model error: {error}"
-            )
-
-            if not is_temporary_error(error):
-                break
-
-            if attempt < primary_attempts - 1:
-                delay = delays[attempt]
-
+    for model in MODELS:
+        for attempt in range(2):
+            try:
                 print(
-                    f"Temporary Gemini error. "
-                    f"Retrying in {delay} seconds..."
+                    f"Trying Gemini model: {model}, attempt: {attempt + 1}",
+                    flush=True
                 )
 
-                time.sleep(delay)
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt
+                )
 
-    print(
-        f"Primary model unavailable. "
-        f"Switching to fallback model {FALLBACK_MODEL}."
-    )
+                answer = getattr(response, "text", None)
 
-    fallback_attempts = 2
+                if answer and answer.strip():
+                    print(
+                        f"Gemini success using {model}",
+                        flush=True
+                    )
+                    return answer.strip()
 
-    for attempt in range(fallback_attempts):
-        try:
-            print(
-                f"Calling fallback model "
-                f"{FALLBACK_MODEL} - attempt {attempt + 1}/{fallback_attempts}"
-            )
+                raise RuntimeError(
+                    f"{model} returned an empty response."
+                )
 
-            response = client.models.generate_content(
-                model=FALLBACK_MODEL,
-                contents=prompt
-            )
+            except Exception as e:
+                last_error = e
 
-            if response and response.text:
-                print("Fallback model succeeded.")
-                return response.text
+                print(
+                    f"Gemini error with {model}: {repr(e)}",
+                    flush=True
+                )
 
-            raise RuntimeError("Fallback model returned an empty response.")
+                if is_auth_error(e):
+                    raise RuntimeError(
+                        "Gemini API authentication failed. "
+                        "Please check GEMINI_API_KEY in Render Environment."
+                    )
 
-        except Exception as error:
-            last_error = error
+                if is_retryable_error(e):
+                    if attempt == 0:
+                        time.sleep(2)
+                    else:
+                        time.sleep(1)
+                    continue
 
-            print(
-                f"Fallback model error: {error}"
-            )
-
-            if attempt < fallback_attempts - 1:
-                print("Retrying fallback model in 3 seconds...")
-                time.sleep(3)
+                break
 
     raise RuntimeError(
-        f"Both Gemini models failed. Last error: {last_error}"
+        f"All Gemini models failed. Last error: {last_error}"
     )
 
 
@@ -182,59 +179,70 @@ def ask():
         if not question:
             return jsonify({
                 "answer": "Please ask me a question."
-            })
+            }), 200
 
         prompt = f"""
-You are BHARAT AI, a friendly AI tutor for students.
+You are BHARAT AI, an intelligent and friendly AI tutor designed for students.
 
-Your job is to:
+Your responsibilities:
 
 - Explain concepts clearly.
-- Use simple language suitable for students.
+- Use language suitable for a Class 6 student when the question is school-related.
 - Give step-by-step explanations when useful.
-- Help the student understand instead of simply giving an answer.
+- Help students understand concepts instead of only giving answers.
 - Support English, Hindi and Hinglish.
+- Keep answers organized and easy to read.
+- Use examples when they help.
 - Be accurate and honest.
-- Do not pretend to know information you do not know.
-- For school questions, give age-appropriate explanations.
-- Use examples when they make the concept easier.
+- Never pretend to know something you do not know.
+- If the student asks a school question, explain it at an appropriate level.
 
 Student question:
+
 {question}
 """
 
         if uploaded_text:
+            material = uploaded_text[:40000]
+
             prompt += f"""
 
-The student uploaded this study material:
+The student has uploaded study material.
+
+Use it when relevant.
 
 --- STUDY MATERIAL ---
-{uploaded_text[:50000]}
+{material}
 --- END STUDY MATERIAL ---
 
-Use the uploaded material when it is relevant.
+If the answer is available in the study material, prioritize it.
 
-If the answer is not present in the uploaded material,
-say so clearly and then answer using your general knowledge.
+If the answer is not present in the study material,
+say that it is not found in the uploaded material and
+then answer using your general knowledge.
 """
 
-        answer = generate_with_retry(prompt)
+        answer = generate_answer(prompt)
 
         return jsonify({
             "answer": answer
-        })
+        }), 200
 
-    except Exception as error:
+    except Exception as e:
         print(
-            f"ERROR in /ask: {error}"
+            "ASK ERROR:",
+            repr(e),
+            flush=True
         )
+
+        error_text = str(e)
 
         return jsonify({
             "answer": (
-                "BHARAT AI is temporarily unable to answer. "
-                "Please try again in a moment."
+                "BHARAT AI could not get a response from Gemini right now.\n\n"
+                f"Reason: {error_text}"
             )
-        }), 500
+        }), 200
 
 
 @app.route("/upload", methods=["POST"])
@@ -254,13 +262,24 @@ def upload():
                 "message": "No file selected."
             }), 400
 
-        filename = secure_filename(
-            file.filename
-        )
+        filename = secure_filename(file.filename)
 
         if not filename:
             return jsonify({
                 "message": "Invalid file name."
+            }), 400
+
+        allowed_extensions = {
+            ".txt",
+            ".pdf",
+            ".docx"
+        }
+
+        extension = os.path.splitext(filename)[1].lower()
+
+        if extension not in allowed_extensions:
+            return jsonify({
+                "message": "Supported files: TXT, PDF and DOCX."
             }), 400
 
         path = os.path.join(
@@ -272,30 +291,32 @@ def upload():
 
         text = read_file(path)
 
-        if not text:
+        if not text.strip():
             return jsonify({
                 "message": (
                     "The file was uploaded, "
-                    "but I couldn't read its text."
+                    "but I couldn't extract readable text from it."
                 )
-            })
+            }), 400
 
-        uploaded_text = text
+        uploaded_text = text[:40000]
 
         return jsonify({
             "message": (
                 f"{filename} uploaded successfully. "
                 "You can now ask questions about it."
             )
-        })
+        }), 200
 
-    except Exception as error:
+    except Exception as e:
         print(
-            f"ERROR in /upload: {error}"
+            "UPLOAD ERROR:",
+            repr(e),
+            flush=True
         )
 
         return jsonify({
-            "message": f"Upload error: {error}"
+            "message": f"Upload error: {str(e)}"
         }), 500
 
 
@@ -307,22 +328,28 @@ def clear():
 
     return jsonify({
         "message": "Study material cleared."
-    })
+    }), 200
 
 
 @app.route("/health")
 def health():
     return jsonify({
-        "status": "BHARAT AI is running"
-    })
+        "status": "BHARAT AI is running",
+        "gemini": "configured",
+        "models": MODELS
+    }), 200
 
 
 if __name__ == "__main__":
     port = int(
-        os.environ.get("PORT", 5000)
+        os.environ.get(
+            "PORT",
+            5000
+        )
     )
 
     app.run(
         host="0.0.0.0",
         port=port
     )
+
