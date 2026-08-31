@@ -3,48 +3,59 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BHARAT AI</title>
+<title>BHARAT AI — Study Tutor</title>
 
 <style>
 * {
     box-sizing: border-box;
 }
 
+:root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #202124;
+    --muted: #73777d;
+    --border: #e3e5e8;
+    --dark: #202124;
+    --green: #1fa463;
+    --green-light: #e9f8f0;
+    --danger: #d93025;
+}
+
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background: #f7f7f8;
-    color: #202123;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
 }
 
 header {
-    height: 70px;
+    height: 74px;
     background: white;
-    border-bottom: 1px solid #e5e5e5;
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 28px;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    padding: 0 34px;
 }
 
-.logo {
+.brand {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.logo h1 {
+.brand h1 {
     margin: 0;
     font-size: 25px;
-    font-weight: 700;
+    font-weight: 750;
     letter-spacing: -0.5px;
 }
 
-.subtitle {
-    color: #777;
+.brand span {
+    color: var(--muted);
     font-size: 14px;
 }
 
@@ -60,126 +71,132 @@ header {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: #22c55e;
+    background: #22a447;
 }
 
-#chat {
-    width: min(1000px, calc(100% - 30px));
-    margin: 0 auto;
-    padding: 35px 0 150px;
-}
-
-.welcome {
-    text-align: center;
-    margin-top: 70px;
-    color: #555;
-}
-
-.welcome h2 {
-    font-size: 32px;
-    margin-bottom: 10px;
-    color: #202123;
-}
-
-.welcome p {
-    font-size: 16px;
-}
-
-.message {
+.app {
+    height: calc(100vh - 74px);
     display: flex;
-    margin: 22px 0;
+    flex-direction: column;
+}
+
+.topbar {
+    min-height: 56px;
+    padding: 10px 28px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
     gap: 12px;
 }
 
-.avatar {
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    border-radius: 50%;
+.account-area {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-weight: bold;
+    gap: 10px;
+}
+
+.account-name {
     font-size: 14px;
+    color: #555;
 }
 
-.ai-avatar {
-    background: #e9eefc;
-    color: #3155c7;
+button {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
 }
 
-.user-avatar {
-    background: #202123;
+.small-btn {
+    padding: 9px 15px;
+    border-radius: 9px;
+    background: white;
+    border: 1px solid var(--border);
+    font-size: 13px;
+}
+
+.small-btn:hover {
+    background: #f3f4f6;
+}
+
+.login-btn {
+    background: var(--dark);
     color: white;
+    border: none;
+}
+
+.chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 30px 150px;
+}
+
+.messages {
+    max-width: 920px;
+    margin: auto;
+}
+
+.message-row {
+    display: flex;
+    margin: 18px 0;
+}
+
+.message-row.user {
+    justify-content: flex-end;
+}
+
+.message-row.ai {
+    justify-content: flex-start;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #e8eefb;
+    color: #3157a4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+    font-weight: bold;
+    font-size: 13px;
+    flex-shrink: 0;
 }
 
 .bubble {
-    max-width: 82%;
+    max-width: min(720px, 80%);
     padding: 14px 17px;
     border-radius: 16px;
     line-height: 1.55;
     white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    font-size: 15px;
 }
 
-.ai-bubble {
+.ai .bubble {
     background: white;
-    border: 1px solid #e5e5e5;
+    border: 1px solid var(--border);
 }
 
-.user-bubble {
-    background: #202123;
+.user .bubble {
+    background: #222427;
     color: white;
-    margin-left: auto;
+    border-radius: 16px 16px 5px 16px;
 }
 
-.user-message {
-    justify-content: flex-end;
+.empty {
+    text-align: center;
+    margin-top: 100px;
+    color: var(--muted);
 }
 
-.user-message .user-avatar {
-    order: 2;
+.empty h2 {
+    color: #222;
+    font-size: 26px;
+    margin-bottom: 8px;
 }
 
-.user-message .bubble {
-    order: 1;
-}
-
-.error-bubble {
-    background: #fff4f4;
-    border: 1px solid #f0caca;
-    color: #8b2525;
-}
-
-.typing {
-    display: inline-flex;
-    gap: 5px;
-    align-items: center;
-}
-
-.typing span {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #888;
-    animation: blink 1.2s infinite;
-}
-
-.typing span:nth-child(2) {
-    animation-delay: .15s;
-}
-
-.typing span:nth-child(3) {
-    animation-delay: .3s;
-}
-
-@keyframes blink {
-    0%, 60%, 100% {
-        opacity: .25;
-    }
-    30% {
-        opacity: 1;
-    }
+.empty p {
+    margin-top: 0;
 }
 
 .composer-area {
@@ -187,137 +204,305 @@ header {
     left: 0;
     right: 0;
     bottom: 0;
+    padding: 18px 25px 24px;
     background: linear-gradient(
-        transparent,
-        #f7f7f8 25%
+        to top,
+        var(--bg) 75%,
+        rgba(247,248,250,0)
     );
-    padding: 25px 15px 18px;
 }
 
 .composer {
-    width: min(900px, 100%);
+    max-width: 920px;
     margin: auto;
     background: white;
-    border: 1px solid #d9d9d9;
+    border: 1px solid #dfe2e6;
     border-radius: 18px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.08);
-    padding: 10px;
-}
-
-.input-row {
-    display: flex;
-    align-items: flex-end;
-    gap: 8px;
-}
-
-textarea {
-    flex: 1;
-    border: none;
-    resize: none;
-    outline: none;
-    font-family: inherit;
-    font-size: 16px;
-    min-height: 48px;
-    max-height: 150px;
-    padding: 12px;
-    line-height: 1.4;
-}
-
-.icon-button {
-    width: 42px;
-    height: 42px;
-    border: none;
-    border-radius: 50%;
-    background: #f0f0f0;
-    cursor: pointer;
-    font-size: 18px;
+    min-height: 72px;
     display: flex;
     align-items: center;
-    justify-content: center;
+    padding: 8px 10px 8px 16px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.04);
 }
 
-.icon-button:hover {
-    background: #e4e4e4;
-}
-
-.send-button {
-    width: 44px;
-    height: 44px;
-    border: none;
+.plus {
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
-    background: #202123;
+    background: transparent;
+    font-size: 23px;
+    color: #555;
+}
+
+#question {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 15px;
+    padding: 12px;
+    background: transparent;
+}
+
+.send {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #202124;
     color: white;
-    cursor: pointer;
     font-size: 18px;
 }
 
-.send-button:hover {
-    background: #000;
-}
-
-.send-button:disabled {
-    opacity: .45;
+.send:disabled {
+    opacity: 0.45;
     cursor: not-allowed;
 }
 
-.file-row {
-    display: flex;
+.disclaimer {
+    text-align: center;
+    font-size: 10px;
+    color: #92969b;
+    margin-top: 7px;
+}
+
+/* MODAL */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.48);
+    display: none;
     align-items: center;
-    gap: 10px;
-    padding: 7px 8px 2px;
-    font-size: 12px;
-    color: #777;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
 }
 
-.file-name {
+.overlay.show {
+    display: flex;
+}
+
+.modal {
+    width: min(440px, 100%);
+    background: white;
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 20px 70px rgba(0,0,0,0.25);
+}
+
+.modal h2 {
+    margin: 0 0 7px;
+    font-size: 24px;
+}
+
+.modal-subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 22px;
+}
+
+.tabs {
+    display: flex;
+    background: #f1f2f4;
+    border-radius: 10px;
+    padding: 3px;
+    margin-bottom: 20px;
+}
+
+.tab {
     flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.clear-button {
-    border: none;
+    padding: 10px;
+    border-radius: 8px;
     background: transparent;
-    color: #777;
-    cursor: pointer;
-    font-size: 12px;
+    font-weight: 600;
 }
 
-.clear-button:hover {
-    color: #222;
+.tab.active {
+    background: white;
+    box-shadow: 0 1px 5px rgba(0,0,0,.08);
 }
 
-input[type="file"] {
+.form {
     display: none;
 }
 
-.notice {
-    text-align: center;
-    font-size: 11px;
-    color: #888;
-    margin-top: 8px;
+.form.active {
+    display: block;
 }
 
-@media (max-width: 600px) {
+.field {
+    margin-bottom: 14px;
+}
+
+.field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 12px 13px;
+    border: 1px solid #d7dade;
+    border-radius: 9px;
+    outline: none;
+    font-size: 14px;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: #777;
+}
+
+.checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #555;
+    margin: 15px 0;
+}
+
+.checkbox input {
+    margin-top: 2px;
+}
+
+.primary {
+    width: 100%;
+    padding: 13px;
+    border-radius: 10px;
+    background: #202124;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.primary:hover {
+    background: #000;
+}
+
+.close {
+    float: right;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f1f2f4;
+    font-size: 18px;
+}
+
+.error {
+    color: var(--danger);
+    background: #fff0ef;
+    border: 1px solid #ffd2ce;
+    padding: 10px;
+    border-radius: 9px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+}
+
+.success {
+    color: #167342;
+    background: #edf9f2;
+    border: 1px solid #c9efd9;
+    padding: 10px;
+    border-radius: 9px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+}
+
+/* ACCOUNT CARD */
+
+.account-card {
+    position: fixed;
+    top: 72px;
+    right: 25px;
+    width: 300px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: 0 12px 35px rgba(0,0,0,.15);
+    padding: 18px;
+    z-index: 500;
+    display: none;
+}
+
+.account-card.show {
+    display: block;
+}
+
+.account-card h3 {
+    margin: 0 0 3px;
+}
+
+.account-card p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 4px 0 14px;
+}
+
+.trial-box {
+    background: var(--green-light);
+    border-radius: 12px;
+    padding: 13px;
+    margin-bottom: 13px;
+}
+
+.trial-title {
+    font-weight: bold;
+    color: #176f44;
+}
+
+.usage {
+    font-size: 13px;
+    color: #555;
+    margin-top: 5px;
+}
+
+.logout {
+    width: 100%;
+    padding: 10px;
+    border-radius: 9px;
+    background: #f1f2f4;
+    color: #333;
+}
+
+.loading {
+    opacity: 0.6;
+}
+
+@media (max-width: 650px) {
     header {
-        padding: 0 15px;
+        padding: 0 17px;
     }
 
-    .subtitle {
+    .brand h1 {
+        font-size: 21px;
+    }
+
+    .brand span {
         display: none;
     }
 
-    #chat {
-        width: calc(100% - 20px);
+    .chat {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .composer-area {
+        padding-left: 10px;
+        padding-right: 10px;
     }
 
     .bubble {
-        max-width: 90%;
+        max-width: 88%;
     }
 
-    .welcome h2 {
-        font-size: 25px;
+    .account-name {
+        display: none;
     }
 }
 </style>
@@ -326,9 +511,9 @@ input[type="file"] {
 <body>
 
 <header>
-    <div class="logo">
+    <div class="brand">
         <h1>BHARAT AI</h1>
-        <span class="subtitle">Study Tutor</span>
+        <span>Study Tutor</span>
     </div>
 
     <div class="status">
@@ -337,507 +522,892 @@ input[type="file"] {
     </div>
 </header>
 
-<main id="chat">
+<div class="app">
 
-    <div class="welcome" id="welcome">
-        <h2>How can I help you study?</h2>
-        <p>Ask BHARAT AI a question in English, Hindi or Hinglish.</p>
+    <div class="topbar">
+        <div class="account-area" id="loggedOutArea">
+            <button class="small-btn login-btn" onclick="openAuth('login')">
+                Login
+            </button>
+
+            <button class="small-btn" onclick="openAuth('register')">
+                Create Account
+            </button>
+        </div>
+
+        <div class="account-area" id="loggedInArea" style="display:none">
+            <span class="account-name" id="accountName"></span>
+            <button class="small-btn" onclick="toggleAccountCard()">
+                Account
+            </button>
+        </div>
     </div>
 
-</main>
+    <main class="chat" id="chat">
+        <div class="messages" id="messages">
+
+            <div class="empty" id="emptyState">
+                <h2>Welcome to BHARAT AI 🇮🇳</h2>
+                <p>Your AI study tutor.</p>
+                <p>Login or create a student account to start learning.</p>
+            </div>
+
+        </div>
+    </main>
+
+</div>
 
 <div class="composer-area">
-
     <div class="composer">
 
-        <div class="input-row">
+        <button class="plus" title="More options">+</button>
 
-            <label class="icon-button" title="Upload study material">
-                +
-                <input
-                    type="file"
-                    id="fileInput"
-                    accept=".txt,.pdf,.docx"
-                >
-            </label>
+        <input
+            id="question"
+            type="text"
+            placeholder="Ask BHARAT AI anything..."
+            autocomplete="off"
+        >
 
-            <textarea
-                id="question"
-                placeholder="Ask BHARAT AI anything..."
-                rows="1"
-            ></textarea>
-
-            <button
-                class="icon-button"
-                id="micButton"
-                title="Voice input"
-                type="button"
-            >
-                🎙
-            </button>
-
-            <button
-                class="send-button"
-                id="sendButton"
-                title="Send"
-                type="button"
-            >
-                ➤
-            </button>
-
-        </div>
-
-        <div class="file-row" id="fileRow" style="display:none;">
-            <span>📄</span>
-            <span class="file-name" id="fileName"></span>
-            <button
-                class="clear-button"
-                id="clearButton"
-                type="button"
-            >
-                Clear
-            </button>
-        </div>
+        <button
+            class="send"
+            id="sendButton"
+            onclick="sendQuestion()"
+            disabled
+        >➤</button>
 
     </div>
 
-    <div class="notice">
+    <div class="disclaimer">
         BHARAT AI can make mistakes. Check important answers.
+    </div>
+</div>
+
+
+<!-- ACCOUNT CARD -->
+
+<div class="account-card" id="accountCard">
+
+    <h3 id="cardName">Student</h3>
+    <p id="cardEmail"></p>
+
+    <div class="trial-box">
+        <div class="trial-title" id="planTitle">
+            7-Day Free Trial
+        </div>
+
+        <div class="usage" id="usageText">
+            Loading usage...
+        </div>
+    </div>
+
+    <button class="logout" onclick="logout()">
+        Log out
+    </button>
+
+</div>
+
+
+<!-- AUTH MODAL -->
+
+<div class="overlay" id="authOverlay">
+
+    <div class="modal">
+
+        <button class="close" onclick="closeAuth()">×</button>
+
+        <h2 id="authTitle">Welcome back</h2>
+
+        <div class="modal-subtitle" id="authSubtitle">
+            Login to continue learning with BHARAT AI.
+        </div>
+
+        <div class="tabs">
+
+            <button
+                class="tab active"
+                id="loginTab"
+                onclick="switchAuth('login')"
+            >
+                Login
+            </button>
+
+            <button
+                class="tab"
+                id="registerTab"
+                onclick="switchAuth('register')"
+            >
+                Create Account
+            </button>
+
+        </div>
+
+        <div class="error" id="authError"></div>
+        <div class="success" id="authSuccess"></div>
+
+
+        <!-- LOGIN -->
+
+        <form
+            class="form active"
+            id="loginForm"
+            onsubmit="login(event)"
+        >
+
+            <div class="field">
+                <label>Email</label>
+                <input
+                    id="loginEmail"
+                    type="email"
+                    placeholder="student@example.com"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input
+                    id="loginPassword"
+                    type="password"
+                    placeholder="Your password"
+                    required
+                >
+            </div>
+
+            <button class="primary" id="loginButton">
+                Login
+            </button>
+
+        </form>
+
+
+        <!-- REGISTER -->
+
+        <form
+            class="form"
+            id="registerForm"
+            onsubmit="register(event)"
+        >
+
+            <div class="field">
+                <label>Student name</label>
+                <input
+                    id="registerName"
+                    type="text"
+                    placeholder="Student name"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label>Email</label>
+                <input
+                    id="registerEmail"
+                    type="email"
+                    placeholder="student@example.com"
+                    required
+                >
+            </div>
+
+            <div class="field">
+                <label>Grade</label>
+
+                <select id="registerGrade" required>
+                    <option value="">Select grade</option>
+                    <option>Class 1</option>
+                    <option>Class 2</option>
+                    <option>Class 3</option>
+                    <option>Class 4</option>
+                    <option>Class 5</option>
+                    <option>Class 6</option>
+                    <option>Class 7</option>
+                    <option>Class 8</option>
+                    <option>Class 9</option>
+                    <option>Class 10</option>
+                    <option>Class 11</option>
+                    <option>Class 12</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Password</label>
+                <input
+                    id="registerPassword"
+                    type="password"
+                    placeholder="Create a password"
+                    minlength="6"
+                    required
+                >
+            </div>
+
+            <label class="checkbox">
+                <input
+                    id="guardianConsent"
+                    type="checkbox"
+                    required
+                >
+
+                <span>
+                    I confirm that a parent/guardian is aware of
+                    this student account and agrees to its use.
+                </span>
+            </label>
+
+            <button class="primary" id="registerButton">
+                Create Account & Start Trial
+            </button>
+
+        </form>
+
     </div>
 
 </div>
 
+
 <script>
-const questionBox = document.getElementById("question");
-const sendButton = document.getElementById("sendButton");
-const chat = document.getElementById("chat");
-const welcome = document.getElementById("welcome");
-const fileInput = document.getElementById("fileInput");
-const fileRow = document.getElementById("fileRow");
-const fileName = document.getElementById("fileName");
-const clearButton = document.getElementById("clearButton");
-const micButton = document.getElementById("micButton");
 
-let busy = false;
+const API = {
+    login: "/login",
+    register: "/register",
+    logout: "/logout",
+    session: "/me",
+    ask: "/ask"
+};
 
-function addMessage(text, type, error = false) {
+let currentUser = null;
+let accountCardOpen = false;
 
-    if (welcome) {
-        welcome.style.display = "none";
+
+/* ---------------- AUTH UI ---------------- */
+
+function openAuth(mode = "login") {
+    document.getElementById("authOverlay").classList.add("show");
+    switchAuth(mode);
+}
+
+function closeAuth() {
+    document.getElementById("authOverlay").classList.remove("show");
+    clearAuthMessages();
+}
+
+function switchAuth(mode) {
+
+    const login = mode === "login";
+
+    document.getElementById("loginForm").classList.toggle("active", login);
+    document.getElementById("registerForm").classList.toggle("active", !login);
+
+    document.getElementById("loginTab").classList.toggle("active", login);
+    document.getElementById("registerTab").classList.toggle("active", !login);
+
+    document.getElementById("authTitle").textContent =
+        login ? "Welcome back" : "Create your account";
+
+    document.getElementById("authSubtitle").textContent =
+        login
+        ? "Login to continue learning with BHARAT AI."
+        : "Create a student account and start your 7-day free trial.";
+
+    clearAuthMessages();
+}
+
+function clearAuthMessages() {
+    document.getElementById("authError").style.display = "none";
+    document.getElementById("authSuccess").style.display = "none";
+}
+
+function showAuthError(message) {
+    const box = document.getElementById("authError");
+    box.textContent = message;
+    box.style.display = "block";
+}
+
+function showAuthSuccess(message) {
+    const box = document.getElementById("authSuccess");
+    box.textContent = message;
+    box.style.display = "block";
+}
+
+
+/* ---------------- API HELPER ---------------- */
+
+async function apiRequest(url, options = {}) {
+
+    const opts = {
+        credentials: "include",
+        ...options,
+        headers: {
+            ...(options.headers || {})
+        }
+    };
+
+    if (opts.body && typeof opts.body !== "string") {
+        opts.headers["Content-Type"] = "application/json";
+        opts.body = JSON.stringify(opts.body);
     }
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "message";
+    const response = await fetch(url, opts);
 
-    if (type === "user") {
-        wrapper.classList.add("user-message");
+    let data = null;
+
+    try {
+        data = await response.json();
+    } catch {
+        data = {};
     }
 
-    const avatar = document.createElement("div");
-    avatar.className =
-        "avatar " +
-        (type === "user" ? "user-avatar" : "ai-avatar");
+    if (!response.ok) {
+        const message =
+            data.message ||
+            data.error ||
+            data.answer ||
+            `Server error (${response.status})`;
 
-    avatar.textContent = type === "user" ? "You" : "B";
-
-    const bubble = document.createElement("div");
-
-    bubble.className =
-        "bubble " +
-        (type === "user" ? "user-bubble" : "ai-bubble");
-
-    if (error) {
-        bubble.classList.add("error-bubble");
+        const error = new Error(message);
+        error.status = response.status;
+        error.data = data;
+        throw error;
     }
 
+    return data;
+}
+
+
+/* ---------------- LOGIN ---------------- */
+
+async function login(event) {
+
+    event.preventDefault();
+
+    const button = document.getElementById("loginButton");
+
+    const email =
+        document.getElementById("loginEmail").value.trim();
+
+    const password =
+        document.getElementById("loginPassword").value;
+
+    clearAuthMessages();
+
+    button.disabled = true;
+    button.textContent = "Logging in...";
+
+    try {
+
+        const data = await apiRequest(API.login, {
+            method: "POST",
+            body: {
+                email,
+                password
+            }
+        });
+
+        currentUser =
+            data.user ||
+            data.account ||
+            data;
+
+        showAuthSuccess("Login successful.");
+
+        await refreshSession();
+
+        setTimeout(() => {
+            closeAuth();
+        }, 500);
+
+    } catch (error) {
+
+        showAuthError(
+            error.message || "Unable to log in."
+        );
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "Login";
+    }
+}
+
+
+/* ---------------- REGISTER ---------------- */
+
+async function register(event) {
+
+    event.preventDefault();
+
+    const button =
+        document.getElementById("registerButton");
+
+    const name =
+        document.getElementById("registerName").value.trim();
+
+    const email =
+        document.getElementById("registerEmail").value.trim();
+
+    const grade =
+        document.getElementById("registerGrade").value;
+
+    const password =
+        document.getElementById("registerPassword").value;
+
+    const guardianConsent =
+        document.getElementById("guardianConsent").checked;
+
+    clearAuthMessages();
+
+    if (!guardianConsent) {
+        showAuthError(
+            "Please confirm that a parent/guardian is aware of the account."
+        );
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Creating account...";
+
+    try {
+
+        const data = await apiRequest(API.register, {
+            method: "POST",
+            body: {
+                name,
+                email,
+                grade,
+                password,
+                guardian_consent: true
+            }
+        });
+
+        currentUser =
+            data.user ||
+            data.account ||
+            data;
+
+        showAuthSuccess(
+            "Account created. Your 7-day free trial has started."
+        );
+
+        await refreshSession();
+
+        setTimeout(() => {
+            closeAuth();
+        }, 800);
+
+    } catch (error) {
+
+        showAuthError(
+            error.message || "Unable to create the account."
+        );
+
+    } finally {
+
+        button.disabled = false;
+        button.textContent = "Create Account & Start Trial";
+    }
+}
+
+
+/* ---------------- SESSION ---------------- */
+
+async function refreshSession() {
+
+    try {
+
+        const data = await apiRequest(API.session, {
+            method: "GET"
+        });
+
+        if (data && data.logged_in === false) {
+            setLoggedOut();
+            return;
+        }
+
+        currentUser =
+            data.user ||
+            data.account ||
+            data;
+
+        if (!currentUser) {
+            setLoggedOut();
+            return;
+        }
+
+        setLoggedIn(currentUser);
+
+    } catch {
+
+        setLoggedOut();
+    }
+}
+
+
+/* ---------------- LOGGED IN UI ---------------- */
+
+function setLoggedIn(user) {
+
+    currentUser = user;
+
+    document.getElementById("loggedOutArea")
+        .style.display = "none";
+
+    document.getElementById("loggedInArea")
+        .style.display = "flex";
+
+    const name =
+        user.name ||
+        user.student_name ||
+        user.email ||
+        "Student";
+
+    const email =
+        user.email ||
+        "";
+
+    document.getElementById("accountName")
+        .textContent = name;
+
+    document.getElementById("cardName")
+        .textContent = name;
+
+    document.getElementById("cardEmail")
+        .textContent = email;
+
+    document.getElementById("sendButton")
+        .disabled = false;
+
+    document.getElementById("question")
+        .placeholder = "Ask BHARAT AI anything...";
+
+    updateUsage(user);
+}
+
+function setLoggedOut() {
+
+    currentUser = null;
+
+    document.getElementById("loggedOutArea")
+        .style.display = "flex";
+
+    document.getElementById("loggedInArea")
+        .style.display = "none";
+
+    document.getElementById("accountCard")
+        .classList.remove("show");
+
+    document.getElementById("sendButton")
+        .disabled = true;
+
+    document.getElementById("question")
+        .placeholder = "Login to ask BHARAT AI...";
+}
+
+
+/* ---------------- USAGE ---------------- */
+
+function updateUsage(user) {
+
+    const used =
+        user.daily_used ??
+        user.usage_today ??
+        user.questions_today ??
+        0;
+
+    const limit =
+        user.daily_limit ??
+        user.limit ??
+        10;
+
+    const plan =
+        user.plan ||
+        user.subscription ||
+        "free_trial";
+
+    document.getElementById("usageText")
+        .textContent =
+        `${used} / ${limit} questions used today`;
+
+    const title =
+        plan === "lifetime"
+        ? "BHARAT AI Lifetime Membership"
+        : "7-Day Free Trial";
+
+    document.getElementById("planTitle")
+        .textContent = title;
+}
+
+
+/* ---------------- ACCOUNT CARD ---------------- */
+
+function toggleAccountCard() {
+
+    accountCardOpen = !accountCardOpen;
+
+    document.getElementById("accountCard")
+        .classList.toggle(
+            "show",
+            accountCardOpen
+        );
+}
+
+
+/* ---------------- LOGOUT ---------------- */
+
+async function logout() {
+
+    try {
+
+        await apiRequest(API.logout, {
+            method: "POST"
+        });
+
+    } catch {
+        // Even if the server already logged out,
+        // clear the local UI.
+    }
+
+    setLoggedOut();
+
+    addMessage(
+        "ai",
+        "You have been logged out. Login again whenever you want to continue learning."
+    );
+}
+
+
+/* ---------------- CHAT ---------------- */
+
+async function sendQuestion() {
+
+    if (!currentUser) {
+        openAuth("login");
+        return;
+    }
+
+    const input =
+        document.getElementById("question");
+
+    const button =
+        document.getElementById("sendButton");
+
+    const question =
+        input.value.trim();
+
+    if (!question) return;
+
+    input.value = "";
+
+    addMessage("user", question);
+
+    button.disabled = true;
+
+    const loadingId =
+        addLoadingMessage();
+
+    try {
+
+        const data = await apiRequest(API.ask, {
+            method: "POST",
+            body: {
+                question
+            }
+        });
+
+        removeMessage(loadingId);
+
+        const answer =
+            data.answer ||
+            data.response ||
+            data.message ||
+            "I couldn't generate an answer.";
+
+        addMessage("ai", answer);
+
+        if (data.user) {
+            currentUser = data.user;
+            updateUsage(currentUser);
+        }
+
+        if (
+            data.daily_used !== undefined ||
+            data.usage_today !== undefined
+        ) {
+            updateUsage({
+                ...currentUser,
+                ...data
+            });
+        }
+
+    } catch (error) {
+
+        removeMessage(loadingId);
+
+        if (error.status === 401) {
+
+            setLoggedOut();
+
+            addMessage(
+                "ai",
+                "Your session has expired. Please log in again."
+            );
+
+            openAuth("login");
+
+        } else if (error.status === 429) {
+
+            addMessage(
+                "ai",
+                error.message ||
+                "You have reached your daily question limit."
+            );
+
+        } else {
+
+            addMessage(
+                "ai",
+                error.message ||
+                "BHARAT AI is temporarily unable to answer. Please try again in a moment."
+            );
+        }
+
+    } finally {
+
+        if (currentUser) {
+            button.disabled = false;
+        }
+    }
+}
+
+
+/* ---------------- CHAT MESSAGES ---------------- */
+
+function addMessage(type, text) {
+
+    const messages =
+        document.getElementById("messages");
+
+    const empty =
+        document.getElementById("emptyState");
+
+    if (empty) {
+        empty.remove();
+    }
+
+    const row =
+        document.createElement("div");
+
+    row.className =
+        `message-row ${type}`;
+
+    if (type === "ai") {
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className = "avatar";
+        avatar.textContent = "B";
+
+        row.appendChild(avatar);
+    }
+
+    const bubble =
+        document.createElement("div");
+
+    bubble.className = "bubble";
     bubble.textContent = text;
 
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(bubble);
+    row.appendChild(bubble);
 
-    chat.appendChild(wrapper);
+    messages.appendChild(row);
 
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-    });
-
-    return wrapper;
+    scrollChat();
 }
 
-function addTyping() {
+function addLoadingMessage() {
 
-    if (welcome) {
-        welcome.style.display = "none";
-    }
+    const messages =
+        document.getElementById("messages");
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "message";
-    wrapper.id = "typingMessage";
+    const row =
+        document.createElement("div");
 
-    const avatar = document.createElement("div");
-    avatar.className = "avatar ai-avatar";
+    const id =
+        "loading-" + Date.now();
+
+    row.id = id;
+    row.className = "message-row ai";
+
+    const avatar =
+        document.createElement("div");
+
+    avatar.className = "avatar";
     avatar.textContent = "B";
 
-    const bubble = document.createElement("div");
-    bubble.className = "bubble ai-bubble";
+    const bubble =
+        document.createElement("div");
 
-    const typing = document.createElement("div");
-    typing.className = "typing";
+    bubble.className = "bubble";
+    bubble.textContent = "Thinking...";
 
-    typing.innerHTML =
-        "<span></span><span></span><span></span>";
+    row.appendChild(avatar);
+    row.appendChild(bubble);
 
-    bubble.appendChild(typing);
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(bubble);
+    messages.appendChild(row);
 
-    chat.appendChild(wrapper);
+    scrollChat();
 
-    window.scrollTo({
-        top: document.body.scrollHeight,
-        behavior: "smooth"
-    });
+    return id;
 }
 
-function removeTyping() {
-    const element = document.getElementById("typingMessage");
+function removeMessage(id) {
+
+    const element =
+        document.getElementById(id);
 
     if (element) {
         element.remove();
     }
 }
 
-async function sendQuestion() {
+function scrollChat() {
 
-    if (busy) {
-        return;
-    }
+    const chat =
+        document.getElementById("chat");
 
-    const question = questionBox.value.trim();
-
-    if (!question) {
-        return;
-    }
-
-    busy = true;
-    sendButton.disabled = true;
-
-    addMessage(question, "user");
-
-    questionBox.value = "";
-    questionBox.style.height = "48px";
-
-    addTyping();
-
-    try {
-
-        const response = await fetch("/ask", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            },
-            body: JSON.stringify({
-                question: question
-            })
-        });
-
-        const contentType =
-            response.headers.get("content-type") || "";
-
-        const rawText = await response.text();
-
-        removeTyping();
-
-        if (!response.ok) {
-
-            let errorMessage = rawText;
-
-            if (contentType.includes("application/json")) {
-                try {
-                    const errorData = JSON.parse(rawText);
-
-                    errorMessage =
-                        errorData.answer ||
-                        errorData.message ||
-                        rawText;
-                } catch (e) {
-                }
-            }
-
-            if (!errorMessage) {
-                errorMessage =
-                    "The server returned an error. HTTP " +
-                    response.status;
-            }
-
-            addMessage(
-                "Server error (" +
-                response.status +
-                "):\n\n" +
-                errorMessage,
-                "ai",
-                true
-            );
-
-            return;
-        }
-
-        let data;
-
-        if (contentType.includes("application/json")) {
-
-            try {
-                data = JSON.parse(rawText);
-            } catch (e) {
-
-                addMessage(
-                    "BHARAT AI returned invalid JSON:\n\n" +
-                    rawText,
-                    "ai",
-                    true
-                );
-
-                return;
-            }
-
-        } else {
-
-            addMessage(
-                "The server returned a non-JSON response:\n\n" +
-                rawText,
-                "ai",
-                true
-            );
-
-            return;
-        }
-
-        if (data.answer) {
-
-            addMessage(
-                String(data.answer),
-                "ai"
-            );
-
-        } else {
-
-            addMessage(
-                "BHARAT AI returned an unexpected response:\n\n" +
-                JSON.stringify(data, null, 2),
-                "ai",
-                true
-            );
-        }
-
-    } catch (error) {
-
-        removeTyping();
-
-        addMessage(
-            "Could not connect to BHARAT AI.\n\n" +
-            error.message,
-            "ai",
-            true
-        );
-
-    } finally {
-
-        busy = false;
-        sendButton.disabled = false;
-        questionBox.focus();
-    }
+    chat.scrollTop =
+        chat.scrollHeight;
 }
 
-sendButton.addEventListener("click", sendQuestion);
 
-questionBox.addEventListener("keydown", function(event) {
+/* ---------------- ENTER KEY ---------------- */
 
-    if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendQuestion();
-    }
+document.getElementById("question")
+    .addEventListener("keydown", function(event) {
 
-});
-
-questionBox.addEventListener("input", function() {
-
-    this.style.height = "48px";
-
-    this.style.height =
-        Math.min(this.scrollHeight, 150) + "px";
-
-});
-
-fileInput.addEventListener("change", async function() {
-
-    const file = this.files[0];
-
-    if (!file) {
-        return;
-    }
-
-    fileName.textContent = file.name;
-    fileRow.style.display = "flex";
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-
-        fileName.textContent =
-            file.name + " — uploading...";
-
-        const response = await fetch("/upload", {
-            method: "POST",
-            body: formData
-        });
-
-        const contentType =
-            response.headers.get("content-type") || "";
-
-        const rawText = await response.text();
-
-        let data = null;
-
-        if (contentType.includes("application/json")) {
-            try {
-                data = JSON.parse(rawText);
-            } catch (e) {
-                data = null;
-            }
+        if (
+            event.key === "Enter" &&
+            !event.shiftKey
+        ) {
+            event.preventDefault();
+            sendQuestion();
         }
-
-        if (!response.ok) {
-
-            addMessage(
-                "Upload error:\n\n" +
-                (data?.message || rawText),
-                "ai",
-                true
-            );
-
-            return;
-        }
-
-        fileName.textContent =
-            data?.message ||
-            file.name + " uploaded successfully.";
-
-    } catch (error) {
-
-        addMessage(
-            "Could not upload the file.\n\n" +
-            error.message,
-            "ai",
-            true
-        );
-    }
-
-});
-
-clearButton.addEventListener("click", async function() {
-
-    try {
-
-        const response = await fetch("/clear", {
-            method: "POST",
-            headers: {
-                "Accept": "application/json"
-            }
-        });
-
-        const rawText = await response.text();
-
-        let data = null;
-
-        try {
-            data = JSON.parse(rawText);
-        } catch (e) {
-        }
-
-        fileInput.value = "";
-        fileRow.style.display = "none";
-        fileName.textContent = "";
-
-        addMessage(
-            data?.message ||
-            "Study material cleared.",
-            "ai"
-        );
-
-    } catch (error) {
-
-        addMessage(
-            "Could not clear the study material.\n\n" +
-            error.message,
-            "ai",
-            true
-        );
-    }
-
-});
-
-const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
-
-if (SpeechRecognition) {
-
-    const recognition = new SpeechRecognition();
-
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.lang = "en-IN";
-
-    micButton.addEventListener("click", function() {
-
-        try {
-            recognition.start();
-            micButton.textContent = "🔴";
-        } catch (error) {
-        }
-
     });
 
-    recognition.onresult = function(event) {
 
-        const transcript =
-            event.results[0][0].transcript;
+/* ---------------- CLOSE MODAL ---------------- */
 
-        questionBox.value =
-            questionBox.value
-                ? questionBox.value + " " + transcript
-                : transcript;
+document.getElementById("authOverlay")
+    .addEventListener("click", function(event) {
 
-        questionBox.dispatchEvent(
-            new Event("input")
-        );
-
-    };
-
-    recognition.onend = function() {
-        micButton.textContent = "🎙";
-    };
-
-    recognition.onerror = function() {
-        micButton.textContent = "🎙";
-    };
-
-} else {
-
-    micButton.style.display = "none";
-}
-
-fetch("/health")
-    .then(response => response.json())
-    .then(data => {
-        console.log("BHARAT AI health:", data);
-    })
-    .catch(error => {
-        console.log("Health check failed:", error);
+        if (event.target === this) {
+            closeAuth();
+        }
     });
+
+
+/* ---------------- START ---------------- */
+
+refreshSession();
+
 </script>
 
 </body>
