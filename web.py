@@ -1,6 +1,8 @@
-from flask import Flask, request, jsonify, send_from_directory
-from google import genai
+rom flask import Flask, request, jsonify, send_from_directory
 import os
+import json
+import urllib.request
+import urllib.error
 from werkzeug.utils import secure_filename
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -10,14 +12,16 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-api_key = os.environ.get("GEMINI_API_KEY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if not api_key:
+if not API_KEY:
     raise RuntimeError("GEMINI_API_KEY is not set.")
 
-client = genai.Client(api_key=api_key)
-
 MODEL = "gemini-3.7-flash"
+
+MAX_FILE_TEXT = 12000
+MAX_QUESTION = 4000
+MAX_OUTPUT_TOKENS = 1200
 
 uploaded_text = ""
 
@@ -35,20 +39,123 @@ def read_file(path):
     if name.endswith(".pdf"):
         try:
             from pypdf import PdfReader
+
             reader = PdfReader(path)
-            return "\n".join(page.extract_text() or "" for page in reader.pages)
+
+            parts = []
+
+            for page in reader.pages:
+                text = page.extract_text() or ""
+
+                if text:
+                    parts.append(text)
+
+                if sum(len(x) for x in parts) >= MAX_FILE_TEXT:
+                    break
+
+            return "\n".join(parts)[:MAX_FILE_TEXT]
+
         except Exception:
             return ""
 
     if name.endswith(".docx"):
         try:
             from docx import Document
+
             doc = Document(path)
-            return "\n".join(p.text for p in doc.paragraphs)
+
+            parts = []
+
+            for paragraph in doc.paragraphs:
+                if paragraph.text:
+                    parts.append(paragraph.text)
+
+                if sum(len(x) for x in parts) >= MAX_FILE_TEXT:
+                    break
+
+            return "\n".join(parts)[:MAX_FILE_TEXT]
+
         except Exception:
             return ""
 
     return ""
+
+
+def ask_gemini(prompt):
+    url = (
+        "https://generativelanguage.googleapis.com/"
+        f"v1beta/models/{MODEL}:generateContent"
+    )
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "maxOutputTokens": MAX_OUTPUT_TOKENS
+        }
+    }
+
+    data = json.dumps(payload).encode("utf-8")
+
+    req = urllib.request.Request(
+        url,
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "x-goog-api-key": API_KEY
+        },
+        method="POST"
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=45) as response:
+            result = json.loads(response.read().decode("utf-8"))
+
+        candidates = result.get("candidates", [])
+
+        if not candidates:
+            return "I couldn't generate an answer right now."
+
+        candidate = candidates[0]
+
+        content = candidate.get("content", {})
+        parts = content.get("parts", [])
+
+        answer_parts = []
+
+        for part in parts:
+            text = part.get("text")
+
+            if text:
+                answer_parts.append(text)
+
+        answer = "".join(answer_parts).strip()
+
+        if not answer:
+            return "I couldn't generate an answer right now."
+
+        return answer
+
+    except urllib.error.HTTPError as e:
+        try:
+            error_body = e.read().decode("utf-8", errors="ignore")
+        except Exception:
+            error_body = ""
+
+        return f"Gemini API error {e.code}: {error_body[:1000]}"
+
+    except urllib.error.URLError as e:
+        return f"Connection error while contacting Gemini: {str(e)}"
+
+    except Exception as e:
+        return f"Gemini error: {str(e)}"
 
 
 @app.route("/")
@@ -62,48 +169,61 @@ def ask():
 
     try:
         data = request.get_json(silent=True) or {}
-        question = str(data.get("question", "")).strip()
+
+        question = str(
+            data.get("question", "")
+        ).strip()
+
+        question = question[:MAX_QUESTION]
 
         if not question:
             return jsonify({
                 "answer": "Please ask me a question."
             })
 
-        prompt = f"""
-You are BHARAT AI, a friendly AI tutor for students.
+        prompt = """
+You are BHARAT AI, a friendly AI tutor designed to help students.
 
-Your job is to:
-- Explain concepts clearly.
-- Use simple language suitable for students.
+Rules:
+- Explain things clearly and simply.
 - Give step-by-step explanations when useful.
-- Help the student understand rather than simply giving an answer.
+- Help the student understand instead of only giving an answer.
 - Support English, Hindi and Hinglish.
-- Be accurate and honest.
-- Do not pretend to know information you do not know.
+- Be respectful and encouraging.
+- Do not invent facts.
+- If you are unsure, say so.
+- Keep answers reasonably concise unless the student asks for more detail.
 
 Student question:
-{question}
-"""
+""" + question
 
         if uploaded_text:
-            prompt += f"""
+            material = uploaded_text[:MAX_FILE_TEXT]
 
-The student uploaded this study material:
+            prompt += """
+
+The student has uploaded study material.
+
+Use it when it is relevant.
 
 --- STUDY MATERIAL ---
-{uploaded_text[:50000]}
+""" + material + """
 --- END STUDY MATERIAL ---
 
-Use the uploaded material when it is relevant.
-If the answer is not present in the uploaded material, say so clearly and then answer using your general knowledge.
+If the requested information is not in the study material, you may answer from general knowledge.
 """
 
-        response = client.models.generate_content(
-            model=MODEL,
-            contents=prompt
-        )
+        answer = ask_gemini(prompt)
 
-        answer = response.text or "I couldn't generate an answer."
+        if answer.startswith("Gemini API error"):
+            return jsonify({
+                "answer": answer
+            }), 502
+
+        if answer.startswith("Connection error"):
+            return jsonify({
+                "answer": answer
+            }), 502
 
         return jsonify({
             "answer": answer
@@ -111,7 +231,7 @@ If the answer is not present in the uploaded material, say so clearly and then a
 
     except Exception as e:
         return jsonify({
-            "answer": f"BHARAT AI error: {str(e)}"
+            "answer": f"BHARAT AI server error: {str(e)}"
         }), 500
 
 
@@ -139,6 +259,19 @@ def upload():
                 "message": "Invalid file name."
             }), 400
 
+        allowed_extensions = {
+            ".txt",
+            ".pdf",
+            ".docx"
+        }
+
+        extension = os.path.splitext(filename)[1].lower()
+
+        if extension not in allowed_extensions:
+            return jsonify({
+                "message": "Supported files: TXT, PDF and DOCX."
+            }), 400
+
         path = os.path.join(UPLOAD_FOLDER, filename)
 
         file.save(path)
@@ -148,12 +281,15 @@ def upload():
         if not text:
             return jsonify({
                 "message": "The file was uploaded, but I couldn't read its text."
-            })
+            }), 400
 
-        uploaded_text = text
+        uploaded_text = text[:MAX_FILE_TEXT]
 
         return jsonify({
-            "message": f"{filename} uploaded successfully. You can now ask questions about it."
+            "message": (
+                f"{filename} uploaded successfully. "
+                "You can now ask questions about it."
+            )
         })
 
     except Exception as e:
@@ -182,4 +318,8 @@ def health():
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )
