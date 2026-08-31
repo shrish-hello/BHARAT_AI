@@ -1,253 +1,127 @@
 from flask import Flask, request, jsonify, send_from_directory, session
 from google import genai
-import os
-import sqlite3
-import hashlib
-import secrets
-import time
-from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
+from functools import wraps
+from datetime import datetime, timedelta
+import os
+import time
+import sqlite3
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "bharat_ai.db")
-UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
-
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "bharat-ai-change-this-secret")
 
-app.secret_key = os.environ.get(
-    "FLASK_SECRET_KEY",
-    secrets.token_hex(32)
-)
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024
+DATABASE = os.path.join(BASE_DIR, "bharat_ai.db")
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+API_KEY = os.environ.get("GEMINI_API_KEY")
 
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY is not set.")
+if not API_KEY:
+    raise RuntimeError("GEMINI_API_KEY is not set in Render Environment Variables.")
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = genai.Client(api_key=API_KEY)
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
+MODELS = [
+    "gemini-3.7-flash",
+    "gemini-3.6-flash",
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-2.5-flash"
+]
 
 TRIAL_DAYS = 7
 DAILY_LIMIT = 20
-MEMBERSHIP_PRICE = 1000
 
-uploaded_text = ""
-
-
-# --------------------------------------------------
-# DATABASE
-# --------------------------------------------------
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH, timeout=30)
-    conn.row_factory = sqlite3.Row
-    return conn
+    connection = sqlite3.connect(DATABASE)
+    connection.row_factory = sqlite3.Row
+    return connection
 
 
 def init_db():
-    conn = get_db()
+    connection = get_db()
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
+    connection.execute("""
+        CREATE TABLE IF NOT EXISTS students (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
-            grade TEXT,
-            password_hash TEXT NOT NULL,
+            grade TEXT NOT NULL,
+            password TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            trial_start TEXT NOT NULL,
-            membership TEXT DEFAULT 'trial',
-            membership_expires TEXT,
-            daily_count INTEGER DEFAULT 0,
-            daily_date TEXT
+            questions_today INTEGER DEFAULT 0,
+            last_question_date TEXT,
+            lifetime INTEGER DEFAULT 0
         )
     """)
 
-    conn.commit()
-    conn.close()
+    connection.commit()
+    connection.close()
 
 
 init_db()
 
 
-# --------------------------------------------------
-# PASSWORD HELPERS
-# --------------------------------------------------
+def reset_daily_usage(student):
+    today = datetime.utcnow().date().isoformat()
 
-def hash_password(password):
-    salt = secrets.token_bytes(16)
+    if student["last_question_date"] != today:
+        connection = get_db()
 
-    password_hash = hashlib.pbkdf2_hmac(
-        "sha256",
-        password.encode("utf-8"),
-        salt,
-        120000
-    )
-
-    return (
-        salt.hex() +
-        ":" +
-        password_hash.hex()
-    )
-
-
-def verify_password(password, stored_hash):
-    try:
-        salt_hex, hash_hex = stored_hash.split(":")
-
-        salt = bytes.fromhex(salt_hex)
-
-        password_hash = hashlib.pbkdf2_hmac(
-            "sha256",
-            password.encode("utf-8"),
-            salt,
-            120000
-        )
-
-        return secrets.compare_digest(
-            password_hash.hex(),
-            hash_hex
-        )
-
-    except Exception:
-        return False
-
-
-# --------------------------------------------------
-# USER HELPERS
-# --------------------------------------------------
-
-def get_current_user():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return None
-
-    conn = get_db()
-
-    user = conn.execute(
-        "SELECT * FROM users WHERE id = ?",
-        (user_id,)
-    ).fetchone()
-
-    conn.close()
-
-    return user
-
-
-def reset_daily_count_if_needed(user):
-    today = date.today().isoformat()
-
-    if user["daily_date"] != today:
-        conn = get_db()
-
-        conn.execute(
+        connection.execute(
             """
-            UPDATE users
-            SET daily_count = 0,
-                daily_date = ?
+            UPDATE students
+            SET questions_today = 0,
+                last_question_date = ?
             WHERE id = ?
             """,
-            (today, user["id"])
+            (today, student["id"])
         )
 
-        conn.commit()
-        conn.close()
+        connection.commit()
+        connection.close()
 
         return 0
 
-    return user["daily_count"] or 0
+    return student["questions_today"]
 
 
-def trial_status(user):
-    try:
-        start = datetime.fromisoformat(user["trial_start"])
+def get_current_student():
+    student_id = session.get("student_id")
 
-        expiry = start + timedelta(days=TRIAL_DAYS)
+    if not student_id:
+        return None
 
-        now = datetime.utcnow()
+    connection = get_db()
 
-        if now < expiry:
-            remaining = expiry - now
+    student = connection.execute(
+        "SELECT * FROM students WHERE id = ?",
+        (student_id,)
+    ).fetchone()
 
-            return {
-                "active": True,
-                "days_remaining": max(
-                    1,
-                    remaining.days + (1 if remaining.seconds else 0)
-                )
-            }
+    connection.close()
 
-        return {
-            "active": False,
-            "days_remaining": 0
-        }
-
-    except Exception:
-        return {
-            "active": False,
-            "days_remaining": 0
-        }
+    return student
 
 
-def access_status(user):
-    if not user:
-        return {
-            "logged_in": False,
-            "allowed": False
-        }
+def login_required(function):
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        student = get_current_student()
 
-    membership = user["membership"] or "trial"
+        if not student:
+            return jsonify({
+                "answer": "Please log in before asking BHARAT AI a question."
+            }), 401
 
-    if membership == "lifetime":
-        return {
-            "logged_in": True,
-            "allowed": True,
-            "membership": "lifetime",
-            "daily_limit": DAILY_LIMIT,
-            "daily_used": reset_daily_count_if_needed(user),
-            "daily_remaining": max(
-                0,
-                DAILY_LIMIT - reset_daily_count_if_needed(user)
-            )
-        }
+        return function(*args, **kwargs)
 
-    trial = trial_status(user)
+    return wrapper
 
-    if not trial["active"]:
-        return {
-            "logged_in": True,
-            "allowed": False,
-            "membership": "expired",
-            "daily_limit": DAILY_LIMIT,
-            "daily_used": reset_daily_count_if_needed(user),
-            "daily_remaining": 0
-        }
-
-    used = reset_daily_count_if_needed(user)
-
-    return {
-        "logged_in": True,
-        "allowed": used < DAILY_LIMIT,
-        "membership": "trial",
-        "trial_days_remaining": trial["days_remaining"],
-        "daily_limit": DAILY_LIMIT,
-        "daily_used": used,
-        "daily_remaining": max(
-            0,
-            DAILY_LIMIT - used
-        )
-    }
-
-
-# --------------------------------------------------
-# FILE READER
-# --------------------------------------------------
 
 def read_file(path):
     name = path.lower()
@@ -259,8 +133,8 @@ def read_file(path):
                 "r",
                 encoding="utf-8",
                 errors="ignore"
-            ) as f:
-                return f.read()
+            ) as file:
+                return file.read()
         except Exception:
             return ""
 
@@ -270,10 +144,12 @@ def read_file(path):
 
             reader = PdfReader(path)
 
-            return "\n".join(
-                page.extract_text() or ""
-                for page in reader.pages
-            )
+            pages = []
+
+            for page in reader.pages:
+                pages.append(page.extract_text() or "")
+
+            return "\n".join(pages)
 
         except Exception:
             return ""
@@ -282,11 +158,11 @@ def read_file(path):
         try:
             from docx import Document
 
-            doc = Document(path)
+            document = Document(path)
 
             return "\n".join(
-                p.text
-                for p in doc.paragraphs
+                paragraph.text
+                for paragraph in document.paragraphs
             )
 
         except Exception:
@@ -295,72 +171,62 @@ def read_file(path):
     return ""
 
 
-# --------------------------------------------------
-# GEMINI
-# --------------------------------------------------
-
 def ask_gemini(prompt):
     last_error = None
 
-    models_to_try = [
-        MODEL,
-        "gemini-3.7-flash",
-        "gemini-2.5-flash"
-    ]
-
-    tried = set()
-
-    for model in models_to_try:
-        if model in tried:
-            continue
-
-        tried.add(model)
+    for model in MODELS:
 
         for attempt in range(3):
+
             try:
-                print(
-                    f"[BHARAT AI] Trying {model}, attempt {attempt + 1}",
-                    flush=True
-                )
 
                 response = client.models.generate_content(
                     model=model,
                     contents=prompt
                 )
 
-                answer = getattr(response, "text", None)
+                text = getattr(response, "text", None)
 
-                if answer and answer.strip():
-                    print(
-                        f"[BHARAT AI] Response received from {model}",
-                        flush=True
-                    )
-
-                    return answer.strip()
+                if text and text.strip():
+                    return text.strip()
 
                 last_error = Exception(
-                    "Gemini returned an empty response."
+                    f"{model} returned an empty response."
                 )
 
-            except Exception as e:
-                last_error = e
+            except Exception as error:
 
-                print(
-                    f"[BHARAT AI] {model} failed: {str(e)}",
-                    flush=True
+                last_error = error
+
+                error_text = str(error).lower()
+
+                retryable = any(
+                    phrase in error_text
+                    for phrase in [
+                        "503",
+                        "429",
+                        "unavailable",
+                        "overloaded",
+                        "high demand",
+                        "rate limit",
+                        "resource exhausted",
+                        "temporarily unavailable",
+                        "internal server error",
+                        "deadline exceeded",
+                        "timeout"
+                    ]
                 )
 
-                if attempt < 2:
-                    time.sleep(1.5 * (attempt + 1))
+                if retryable and attempt < 2:
+                    time.sleep(2 ** attempt)
+                    continue
+
+                break
 
     raise last_error or Exception(
         "All Gemini models failed."
     )
 
-
-# --------------------------------------------------
-# HOME
-# --------------------------------------------------
 
 @app.route("/")
 def home():
@@ -370,476 +236,384 @@ def home():
     )
 
 
-# --------------------------------------------------
-# REGISTER
-# --------------------------------------------------
+@app.route("/health")
+def health():
+    return jsonify({
+        "status": "BHARAT AI is running",
+        "service": "online"
+    })
+
 
 @app.route("/register", methods=["POST"])
-@app.route("/signup", methods=["POST"])
-@app.route("/create-account", methods=["POST"])
 def register():
+
     try:
-        data = request.get_json(
-            silent=True
-        ) or request.form.to_dict()
 
-        name = str(
-            data.get("name") or
-            data.get("student_name") or
-            ""
-        ).strip()
+        data = request.get_json(silent=True) or {}
 
-        email = str(
-            data.get("email") or
-            ""
-        ).strip().lower()
+        name = str(data.get("name", "")).strip()
+        email = str(data.get("email", "")).strip().lower()
+        grade = str(data.get("grade", "")).strip()
+        password = str(data.get("password", ""))
 
-        grade = str(
-            data.get("grade") or
-            ""
-        ).strip()
-
-        password = str(
-            data.get("password") or
-            ""
+        guardian_approved = bool(
+            data.get("guardian_approved", False)
         )
-
-        guardian_confirmed = data.get(
-            "guardian_confirmed",
-            data.get(
-                "parent_confirmed",
-                data.get("parentGuardianConfirmed", False)
-            )
-        )
-
-        if isinstance(
-            guardian_confirmed,
-            str
-        ):
-            guardian_confirmed = guardian_confirmed.lower() in [
-                "true",
-                "1",
-                "yes",
-                "on"
-            ]
 
         if not name:
             return jsonify({
-                "success": False,
-                "message": "Please enter the student name."
+                "message": "Please enter the student's name."
             }), 400
 
         if not email or "@" not in email:
             return jsonify({
-                "success": False,
                 "message": "Please enter a valid email address."
+            }), 400
+
+        if not grade:
+            return jsonify({
+                "message": "Please select a class."
             }), 400
 
         if len(password) < 6:
             return jsonify({
-                "success": False,
                 "message": "Password must be at least 6 characters."
             }), 400
 
-        if not guardian_confirmed:
+        if not guardian_approved:
             return jsonify({
-                "success": False,
-                "message": "A parent or guardian must confirm this student account."
+                "message": "A parent or guardian must approve this student account."
             }), 400
 
-        conn = get_db()
+        connection = get_db()
 
-        existing = conn.execute(
-            "SELECT id FROM users WHERE email = ?",
+        existing = connection.execute(
+            "SELECT id FROM students WHERE email = ?",
             (email,)
         ).fetchone()
 
         if existing:
-            conn.close()
+            connection.close()
 
             return jsonify({
-                "success": False,
                 "message": "An account with this email already exists."
             }), 409
 
-        now = datetime.utcnow().isoformat()
+        created_at = datetime.utcnow().isoformat()
 
-        password_hash = hash_password(password)
-
-        cursor = conn.execute(
+        connection.execute(
             """
-            INSERT INTO users
+            INSERT INTO students
             (
                 name,
                 email,
                 grade,
-                password_hash,
+                password,
                 created_at,
-                trial_start,
-                membership,
-                daily_count,
-                daily_date
+                questions_today,
+                last_question_date,
+                lifetime
             )
-            VALUES (?, ?, ?, ?, ?, ?, 'trial', 0, ?)
+            VALUES (?, ?, ?, ?, ?, 0, ?, 0)
             """,
             (
                 name,
                 email,
                 grade,
-                password_hash,
-                now,
-                now,
-                date.today().isoformat()
+                password,
+                created_at,
+                datetime.utcnow().date().isoformat()
             )
         )
 
-        user_id = cursor.lastrowid
+        connection.commit()
 
-        conn.commit()
-        conn.close()
-
-        session["user_id"] = user_id
-
-        print(
-            f"[BHARAT AI] New account created: {email}",
-            flush=True
-        )
-
-        return jsonify({
-            "success": True,
-            "message": "Account created successfully. Your 7-day free trial has started.",
-            "user": {
-                "id": user_id,
-                "name": name,
-                "email": email,
-                "grade": grade
-            },
-            "trial_days": TRIAL_DAYS,
-            "daily_limit": DAILY_LIMIT
-        })
-
-    except Exception as e:
-        print(
-            f"[REGISTER ERROR] {str(e)}",
-            flush=True
-        )
-
-        return jsonify({
-            "success": False,
-            "message": "Unable to create the account right now."
-        }), 500
-
-
-# --------------------------------------------------
-# LOGIN
-# --------------------------------------------------
-
-@app.route("/login", methods=["POST"])
-def login():
-    try:
-        data = request.get_json(
-            silent=True
-        ) or request.form.to_dict()
-
-        email = str(
-            data.get("email") or
-            ""
-        ).strip().lower()
-
-        password = str(
-            data.get("password") or
-            ""
-        )
-
-        if not email or not password:
-            return jsonify({
-                "success": False,
-                "message": "Email and password are required."
-            }), 400
-
-        conn = get_db()
-
-        user = conn.execute(
-            "SELECT * FROM users WHERE email = ?",
+        student = connection.execute(
+            "SELECT * FROM students WHERE email = ?",
             (email,)
         ).fetchone()
 
-        conn.close()
+        connection.close()
 
-        if not user or not verify_password(
-            password,
-            user["password_hash"]
-        ):
-            return jsonify({
-                "success": False,
-                "message": "Incorrect email or password."
-            }), 401
-
-        session["user_id"] = user["id"]
-
-        status = access_status(user)
-
-        print(
-            f"[BHARAT AI] Login successful: {email}",
-            flush=True
-        )
+        session["student_id"] = student["id"]
 
         return jsonify({
-            "success": True,
-            "message": "Login successful.",
-            "user": {
-                "id": user["id"],
-                "name": user["name"],
-                "email": user["email"],
-                "grade": user["grade"]
-            },
-            "status": status
+            "message": "Account created successfully. Your 7-day free trial has started.",
+            "student": {
+                "name": student["name"],
+                "email": student["email"],
+                "grade": student["grade"]
+            }
         })
 
-    except Exception as e:
-        print(
-            f"[LOGIN ERROR] {str(e)}",
-            flush=True
-        )
+    except Exception as error:
 
         return jsonify({
-            "success": False,
-            "message": "Unable to log in right now."
+            "message": f"Registration error: {str(error)}"
         }), 500
 
 
-# --------------------------------------------------
-# LOGOUT
-# --------------------------------------------------
+@app.route("/login", methods=["POST"])
+def login():
 
-@app.route("/logout", methods=["POST", "GET"])
+    try:
+
+        data = request.get_json(silent=True) or {}
+
+        email = str(data.get("email", "")).strip().lower()
+        password = str(data.get("password", ""))
+
+        if not email or not password:
+            return jsonify({
+                "message": "Please enter your email and password."
+            }), 400
+
+        connection = get_db()
+
+        student = connection.execute(
+            """
+            SELECT *
+            FROM students
+            WHERE email = ?
+            AND password = ?
+            """,
+            (email, password)
+        ).fetchone()
+
+        connection.close()
+
+        if not student:
+            return jsonify({
+                "message": "Incorrect email or password."
+            }), 401
+
+        session["student_id"] = student["id"]
+
+        return jsonify({
+            "message": "Login successful.",
+            "student": {
+                "name": student["name"],
+                "email": student["email"],
+                "grade": student["grade"]
+            }
+        })
+
+    except Exception as error:
+
+        return jsonify({
+            "message": f"Login error: {str(error)}"
+        }), 500
+
+
+@app.route("/logout", methods=["POST"])
 def logout():
+
     session.clear()
 
     return jsonify({
-        "success": True,
         "message": "Logged out successfully."
     })
 
 
-# --------------------------------------------------
-# CURRENT USER
-# --------------------------------------------------
-
-@app.route("/me", methods=["GET"])
-@app.route("/session", methods=["GET"])
-@app.route("/auth/me", methods=["GET"])
+@app.route("/me")
 def me():
-    user = get_current_user()
 
-    if not user:
+    student = get_current_student()
+
+    if not student:
         return jsonify({
-            "success": False,
             "logged_in": False
-        }), 401
+        })
+
+    created = datetime.fromisoformat(
+        student["created_at"]
+    )
+
+    trial_end = created + timedelta(days=TRIAL_DAYS)
+
+    now = datetime.utcnow()
+
+    trial_active = now < trial_end
+
+    reset_daily_usage(student)
+
+    connection = get_db()
+
+    updated_student = connection.execute(
+        "SELECT * FROM students WHERE id = ?",
+        (student["id"],)
+    ).fetchone()
+
+    connection.close()
 
     return jsonify({
-        "success": True,
         "logged_in": True,
-        "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "email": user["email"],
-            "grade": user["grade"]
+        "student": {
+            "name": updated_student["name"],
+            "email": updated_student["email"],
+            "grade": updated_student["grade"]
         },
-        "status": access_status(user)
+        "trial": {
+            "active": trial_active,
+            "days_left": max(
+                0,
+                (trial_end.date() - now.date()).days
+            )
+        },
+        "usage": {
+            "questions_today": updated_student["questions_today"],
+            "daily_limit": DAILY_LIMIT
+        },
+        "lifetime": bool(updated_student["lifetime"])
     })
 
-
-# --------------------------------------------------
-# ACCOUNT STATUS
-# --------------------------------------------------
-
-@app.route("/account", methods=["GET"])
-@app.route("/account/status", methods=["GET"])
-def account_status():
-    user = get_current_user()
-
-    if not user:
-        return jsonify({
-            "success": False,
-            "logged_in": False
-        }), 401
-
-    return jsonify({
-        "success": True,
-        "user": {
-            "id": user["id"],
-            "name": user["name"],
-            "email": user["email"],
-            "grade": user["grade"]
-        },
-        "status": access_status(user),
-        "membership_price": MEMBERSHIP_PRICE
-    })
-
-
-# --------------------------------------------------
-# ASK BHARAT AI
-# --------------------------------------------------
 
 @app.route("/ask", methods=["POST"])
+@login_required
 def ask():
-    global uploaded_text
+
+    student = get_current_student()
 
     try:
-        user = get_current_user()
 
-        if not user:
-            return jsonify({
-                "success": False,
-                "answer": "Please log in before asking BHARAT AI a question."
-            }), 401
-
-        status = access_status(user)
-
-        if not status.get("allowed"):
-            if status.get("membership") == "expired":
-                return jsonify({
-                    "success": False,
-                    "answer": "Your 7-day free trial has ended. Please ask a parent or guardian to review the membership options."
-                }), 403
-
-            return jsonify({
-                "success": False,
-                "answer": "You have reached today's question limit. Please try again tomorrow."
-            }), 429
-
-        data = request.get_json(
-            silent=True
-        ) or {}
+        data = request.get_json(silent=True) or {}
 
         question = str(
-            data.get("question") or
-            data.get("prompt") or
-            ""
+            data.get("question", "")
         ).strip()
 
         if not question:
+
             return jsonify({
-                "success": False,
                 "answer": "Please ask me a question."
             }), 400
 
-        prompt = f"""
-You are BHARAT AI, a friendly educational AI tutor for students.
+        created = datetime.fromisoformat(
+            student["created_at"]
+        )
 
-Student:
-Name: {user["name"]}
-Grade: {user["grade"] or "Not specified"}
+        trial_end = created + timedelta(
+            days=TRIAL_DAYS
+        )
+
+        now = datetime.utcnow()
+
+        is_trial_active = now < trial_end
+
+        if not is_trial_active and not student["lifetime"]:
+
+            return jsonify({
+                "answer": "Your 7-day free trial has ended. Please activate BHARAT AI Lifetime Membership to continue."
+            }), 403
+
+        questions_today = reset_daily_usage(student)
+
+        if questions_today >= DAILY_LIMIT and not student["lifetime"]:
+
+            return jsonify({
+                "answer": f"You have reached today's limit of {DAILY_LIMIT} questions. Please try again tomorrow."
+            }), 429
+
+        prompt = f"""
+You are BHARAT AI, a friendly AI tutor for students.
+
+Student name:
+{student["name"]}
+
+Class:
+{student["grade"]}
 
 Your job is to:
 - Explain concepts clearly.
-- Use language suitable for the student's grade.
-- Teach instead of simply giving unexplained answers.
+- Use simple language suitable for the student's class.
+- Teach instead of only giving an answer.
 - Give step-by-step explanations when useful.
 - Support English, Hindi and Hinglish.
 - Be accurate and honest.
-- If you are uncertain, say so.
-- Keep answers reasonably concise unless the student asks for detail.
-- Never claim to have performed an action you did not perform.
+- Never invent facts.
+- If you are unsure, clearly say that you are unsure.
+- Keep explanations appropriate for students.
 
 Student question:
+
 {question}
 """
 
+        uploaded_text = session.get("uploaded_text", "")
+
         if uploaded_text:
+
             prompt += f"""
 
-The student uploaded study material.
+The student has uploaded study material.
 
 Use it when relevant.
 
 --- STUDY MATERIAL ---
+
 {uploaded_text[:50000]}
+
 --- END STUDY MATERIAL ---
 
-If the answer is not present in the uploaded material, clearly say that it is not found there and then answer using your general knowledge.
+If the answer is not present in the study material,
+say that clearly and then answer using your general knowledge.
 """
-
-        print(
-            f"[BHARAT AI] Question from {user['email']}: {question}",
-            flush=True
-        )
 
         answer = ask_gemini(prompt)
 
-        conn = get_db()
+        connection = get_db()
 
-        today = date.today().isoformat()
+        today = datetime.utcnow().date().isoformat()
 
-        conn.execute(
+        connection.execute(
             """
-            UPDATE users
-            SET daily_count =
-                CASE
-                    WHEN daily_date = ?
-                    THEN daily_count + 1
-                    ELSE 1
-                END,
-                daily_date = ?
+            UPDATE students
+            SET questions_today = questions_today + 1,
+                last_question_date = ?
             WHERE id = ?
             """,
-            (
-                today,
-                today,
-                user["id"]
-            )
+            (today, student["id"])
         )
 
-        conn.commit()
-        conn.close()
+        connection.commit()
+        connection.close()
 
         return jsonify({
-            "success": True,
             "answer": answer
         })
 
-    except Exception as e:
+    except Exception as error:
+
+        error_text = str(error)
+
         print(
-            f"[ASK ERROR] {str(e)}",
+            "BHARAT AI Gemini error:",
+            error_text,
             flush=True
         )
 
         return jsonify({
-            "success": False,
             "answer": "BHARAT AI is temporarily unable to answer. Please try again in a moment."
         }), 500
 
 
-# --------------------------------------------------
-# UPLOAD
-# --------------------------------------------------
-
 @app.route("/upload", methods=["POST"])
+@login_required
 def upload():
-    global uploaded_text
 
     try:
-        user = get_current_user()
-
-        if not user:
-            return jsonify({
-                "success": False,
-                "message": "Please log in first."
-            }), 401
 
         if "file" not in request.files:
+
             return jsonify({
-                "success": False,
                 "message": "No file selected."
             }), 400
 
         file = request.files["file"]
 
-        if not file.filename:
+        if file.filename == "":
+
             return jsonify({
-                "success": False,
                 "message": "No file selected."
             }), 400
 
@@ -848,23 +622,23 @@ def upload():
         )
 
         if not filename:
+
             return jsonify({
-                "success": False,
                 "message": "Invalid file name."
             }), 400
 
-        allowed = (
+        allowed_extensions = (
             ".txt",
             ".pdf",
             ".docx"
         )
 
         if not filename.lower().endswith(
-            allowed
+            allowed_extensions
         ):
+
             return jsonify({
-                "success": False,
-                "message": "Supported files are TXT, PDF and DOCX."
+                "message": "Only TXT, PDF and DOCX files are supported."
             }), 400
 
         path = os.path.join(
@@ -876,174 +650,53 @@ def upload():
 
         text = read_file(path)
 
-        if not text.strip():
+        if not text:
+
             return jsonify({
-                "success": False,
                 "message": "The file was uploaded, but I couldn't read its text."
             }), 400
 
-        uploaded_text = text
-
-        print(
-            f"[BHARAT AI] File uploaded: {filename}",
-            flush=True
-        )
+        session["uploaded_text"] = text[:50000]
 
         return jsonify({
-            "success": True,
             "message": f"{filename} uploaded successfully. You can now ask questions about it."
         })
 
-    except Exception as e:
-        print(
-            f"[UPLOAD ERROR] {str(e)}",
-            flush=True
-        )
+    except Exception as error:
 
         return jsonify({
-            "success": False,
-            "message": "Unable to process the uploaded file."
+            "message": f"Upload error: {str(error)}"
         }), 500
 
 
-# --------------------------------------------------
-# CLEAR STUDY MATERIAL
-# --------------------------------------------------
-
 @app.route("/clear", methods=["POST"])
+@login_required
 def clear():
-    global uploaded_text
 
-    uploaded_text = ""
+    session.pop("uploaded_text", None)
 
     return jsonify({
-        "success": True,
         "message": "Study material cleared."
     })
 
 
-# --------------------------------------------------
-# MEMBERSHIP INFORMATION
-# --------------------------------------------------
-
-@app.route("/membership", methods=["GET"])
+@app.route("/membership", methods=["POST"])
+@login_required
 def membership():
-    user = get_current_user()
 
     return jsonify({
-        "success": True,
-        "price": MEMBERSHIP_PRICE,
-        "currency": "INR",
-        "name": "BHARAT AI Lifetime Membership",
-        "description": "Lifetime access subject to the applicable usage limits.",
-        "logged_in": bool(user)
+        "message": "Lifetime membership payment setup is not connected yet.",
+        "price": 1000
     })
 
-
-# --------------------------------------------------
-# MEMBERSHIP STATUS
-# --------------------------------------------------
-
-@app.route("/membership/status", methods=["GET"])
-def membership_status():
-    user = get_current_user()
-
-    if not user:
-        return jsonify({
-            "success": False,
-            "logged_in": False
-        }), 401
-
-    return jsonify({
-        "success": True,
-        "membership": user["membership"] or "trial",
-        "price": MEMBERSHIP_PRICE,
-        "daily_limit": DAILY_LIMIT,
-        "status": access_status(user)
-    })
-
-
-# --------------------------------------------------
-# HEALTH CHECK
-# --------------------------------------------------
-
-@app.route("/health")
-def health():
-    return jsonify({
-        "status": "BHARAT AI is running",
-        "model": MODEL,
-        "database": "connected"
-    })
-
-
-# --------------------------------------------------
-# ERROR HANDLERS
-# --------------------------------------------------
-
-@app.errorhandler(404)
-def not_found(error):
-    return jsonify({
-        "success": False,
-        "error": "Route not found."
-    }), 404
-
-
-@app.errorhandler(413)
-def too_large(error):
-    return jsonify({
-        "success": False,
-        "error": "File is too large. Maximum size is 10 MB."
-    }), 413
-
-
-@app.errorhandler(500)
-def internal_error(error):
-    return jsonify({
-        "success": False,
-        "error": "Internal server error."
-    }), 500
-
-
-# --------------------------------------------------
-# START
-# --------------------------------------------------
 
 if __name__ == "__main__":
+
     port = int(
         os.environ.get(
             "PORT",
             5000
         )
-    )
-
-    print(
-        "==========================================",
-        flush=True
-    )
-
-    print(
-        "BHARAT AI SERVER STARTING",
-        flush=True
-    )
-
-    print(
-        f"Model: {MODEL}",
-        flush=True
-    )
-
-    print(
-        f"Daily limit: {DAILY_LIMIT}",
-        flush=True
-    )
-
-    print(
-        f"Trial: {TRIAL_DAYS} days",
-        flush=True
-    )
-
-    print(
-        "==========================================",
-        flush=True
     )
 
     app.run(
