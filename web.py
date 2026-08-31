@@ -1,8 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
+from google import genai
 import os
-import json
-import urllib.request
-import urllib.error
+import time
 from werkzeug.utils import secure_filename
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,16 +11,15 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-API_KEY = os.environ.get("GEMINI_API_KEY")
+api_key = os.environ.get("GEMINI_API_KEY")
 
-if not API_KEY:
+if not api_key:
     raise RuntimeError("GEMINI_API_KEY is not set.")
 
-MODEL = "gemini-3.7-flash"
+client = genai.Client(api_key=api_key)
 
-MAX_FILE_TEXT = 12000
-MAX_QUESTION = 4000
-MAX_OUTPUT_TOKENS = 1200
+PRIMARY_MODEL = "gemini-3.7-flash"
+FALLBACK_MODEL = "gemini-2.5-flash"
 
 uploaded_text = ""
 
@@ -39,123 +37,130 @@ def read_file(path):
     if name.endswith(".pdf"):
         try:
             from pypdf import PdfReader
-
             reader = PdfReader(path)
-
-            parts = []
-
-            for page in reader.pages:
-                text = page.extract_text() or ""
-
-                if text:
-                    parts.append(text)
-
-                if sum(len(x) for x in parts) >= MAX_FILE_TEXT:
-                    break
-
-            return "\n".join(parts)[:MAX_FILE_TEXT]
-
+            return "\n".join(
+                page.extract_text() or ""
+                for page in reader.pages
+            )
         except Exception:
             return ""
 
     if name.endswith(".docx"):
         try:
             from docx import Document
-
             doc = Document(path)
-
-            parts = []
-
-            for paragraph in doc.paragraphs:
-                if paragraph.text:
-                    parts.append(paragraph.text)
-
-                if sum(len(x) for x in parts) >= MAX_FILE_TEXT:
-                    break
-
-            return "\n".join(parts)[:MAX_FILE_TEXT]
-
+            return "\n".join(
+                paragraph.text
+                for paragraph in doc.paragraphs
+            )
         except Exception:
             return ""
 
     return ""
 
 
-def ask_gemini(prompt):
-    url = (
-        "https://generativelanguage.googleapis.com/"
-        f"v1beta/models/{MODEL}:generateContent"
-    )
+def is_temporary_error(error):
+    text = str(error).lower()
 
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
-            }
-        ],
-        "generationConfig": {
-            "maxOutputTokens": MAX_OUTPUT_TOKENS
-        }
-    }
+    temporary_codes = [
+        "503",
+        "429",
+        "500",
+        "service unavailable",
+        "unavailable",
+        "high demand",
+        "resource exhausted",
+        "rate limit",
+        "temporarily",
+        "overloaded"
+    ]
 
-    data = json.dumps(payload).encode("utf-8")
+    return any(code in text for code in temporary_codes)
 
-    req = urllib.request.Request(
-        url,
-        data=data,
-        headers={
-            "Content-Type": "application/json",
-            "x-goog-api-key": API_KEY
-        },
-        method="POST"
-    )
 
-    try:
-        with urllib.request.urlopen(req, timeout=45) as response:
-            result = json.loads(response.read().decode("utf-8"))
+def generate_with_retry(prompt):
+    primary_attempts = 3
+    delays = [2, 4, 8]
 
-        candidates = result.get("candidates", [])
+    last_error = None
 
-        if not candidates:
-            return "I couldn't generate an answer right now."
-
-        candidate = candidates[0]
-
-        content = candidate.get("content", {})
-        parts = content.get("parts", [])
-
-        answer_parts = []
-
-        for part in parts:
-            text = part.get("text")
-
-            if text:
-                answer_parts.append(text)
-
-        answer = "".join(answer_parts).strip()
-
-        if not answer:
-            return "I couldn't generate an answer right now."
-
-        return answer
-
-    except urllib.error.HTTPError as e:
+    for attempt in range(primary_attempts):
         try:
-            error_body = e.read().decode("utf-8", errors="ignore")
-        except Exception:
-            error_body = ""
+            print(
+                f"Calling primary model "
+                f"{PRIMARY_MODEL} - attempt {attempt + 1}/{primary_attempts}"
+            )
 
-        return f"Gemini API error {e.code}: {error_body[:1000]}"
+            response = client.models.generate_content(
+                model=PRIMARY_MODEL,
+                contents=prompt
+            )
 
-    except urllib.error.URLError as e:
-        return f"Connection error while contacting Gemini: {str(e)}"
+            if response and response.text:
+                print("Primary model succeeded.")
+                return response.text
 
-    except Exception as e:
-        return f"Gemini error: {str(e)}"
+            raise RuntimeError("Primary model returned an empty response.")
+
+        except Exception as error:
+            last_error = error
+
+            print(
+                f"Primary model error: {error}"
+            )
+
+            if not is_temporary_error(error):
+                break
+
+            if attempt < primary_attempts - 1:
+                delay = delays[attempt]
+
+                print(
+                    f"Temporary Gemini error. "
+                    f"Retrying in {delay} seconds..."
+                )
+
+                time.sleep(delay)
+
+    print(
+        f"Primary model unavailable. "
+        f"Switching to fallback model {FALLBACK_MODEL}."
+    )
+
+    fallback_attempts = 2
+
+    for attempt in range(fallback_attempts):
+        try:
+            print(
+                f"Calling fallback model "
+                f"{FALLBACK_MODEL} - attempt {attempt + 1}/{fallback_attempts}"
+            )
+
+            response = client.models.generate_content(
+                model=FALLBACK_MODEL,
+                contents=prompt
+            )
+
+            if response and response.text:
+                print("Fallback model succeeded.")
+                return response.text
+
+            raise RuntimeError("Fallback model returned an empty response.")
+
+        except Exception as error:
+            last_error = error
+
+            print(
+                f"Fallback model error: {error}"
+            )
+
+            if attempt < fallback_attempts - 1:
+                print("Retrying fallback model in 3 seconds...")
+                time.sleep(3)
+
+    raise RuntimeError(
+        f"Both Gemini models failed. Last error: {last_error}"
+    )
 
 
 @app.route("/")
@@ -174,64 +179,61 @@ def ask():
             data.get("question", "")
         ).strip()
 
-        question = question[:MAX_QUESTION]
-
         if not question:
             return jsonify({
                 "answer": "Please ask me a question."
             })
 
-        prompt = """
-You are BHARAT AI, a friendly AI tutor designed to help students.
+        prompt = f"""
+You are BHARAT AI, a friendly AI tutor for students.
 
-Rules:
-- Explain things clearly and simply.
+Your job is to:
+
+- Explain concepts clearly.
+- Use simple language suitable for students.
 - Give step-by-step explanations when useful.
-- Help the student understand instead of only giving an answer.
+- Help the student understand instead of simply giving an answer.
 - Support English, Hindi and Hinglish.
-- Be respectful and encouraging.
-- Do not invent facts.
-- If you are unsure, say so.
-- Keep answers reasonably concise unless the student asks for more detail.
+- Be accurate and honest.
+- Do not pretend to know information you do not know.
+- For school questions, give age-appropriate explanations.
+- Use examples when they make the concept easier.
 
 Student question:
-""" + question
-
-        if uploaded_text:
-            material = uploaded_text[:MAX_FILE_TEXT]
-
-            prompt += """
-
-The student has uploaded study material.
-
-Use it when it is relevant.
-
---- STUDY MATERIAL ---
-""" + material + """
---- END STUDY MATERIAL ---
-
-If the requested information is not in the study material, you may answer from general knowledge.
+{question}
 """
 
-        answer = ask_gemini(prompt)
+        if uploaded_text:
+            prompt += f"""
 
-        if answer.startswith("Gemini API error"):
-            return jsonify({
-                "answer": answer
-            }), 502
+The student uploaded this study material:
 
-        if answer.startswith("Connection error"):
-            return jsonify({
-                "answer": answer
-            }), 502
+--- STUDY MATERIAL ---
+{uploaded_text[:50000]}
+--- END STUDY MATERIAL ---
+
+Use the uploaded material when it is relevant.
+
+If the answer is not present in the uploaded material,
+say so clearly and then answer using your general knowledge.
+"""
+
+        answer = generate_with_retry(prompt)
 
         return jsonify({
             "answer": answer
         })
 
-    except Exception as e:
+    except Exception as error:
+        print(
+            f"ERROR in /ask: {error}"
+        )
+
         return jsonify({
-            "answer": f"BHARAT AI server error: {str(e)}"
+            "answer": (
+                "BHARAT AI is temporarily unable to answer. "
+                "Please try again in a moment."
+            )
         }), 500
 
 
@@ -252,27 +254,19 @@ def upload():
                 "message": "No file selected."
             }), 400
 
-        filename = secure_filename(file.filename)
+        filename = secure_filename(
+            file.filename
+        )
 
         if not filename:
             return jsonify({
                 "message": "Invalid file name."
             }), 400
 
-        allowed_extensions = {
-            ".txt",
-            ".pdf",
-            ".docx"
-        }
-
-        extension = os.path.splitext(filename)[1].lower()
-
-        if extension not in allowed_extensions:
-            return jsonify({
-                "message": "Supported files: TXT, PDF and DOCX."
-            }), 400
-
-        path = os.path.join(UPLOAD_FOLDER, filename)
+        path = os.path.join(
+            UPLOAD_FOLDER,
+            filename
+        )
 
         file.save(path)
 
@@ -280,10 +274,13 @@ def upload():
 
         if not text:
             return jsonify({
-                "message": "The file was uploaded, but I couldn't read its text."
-            }), 400
+                "message": (
+                    "The file was uploaded, "
+                    "but I couldn't read its text."
+                )
+            })
 
-        uploaded_text = text[:MAX_FILE_TEXT]
+        uploaded_text = text
 
         return jsonify({
             "message": (
@@ -292,9 +289,13 @@ def upload():
             )
         })
 
-    except Exception as e:
+    except Exception as error:
+        print(
+            f"ERROR in /upload: {error}"
+        )
+
         return jsonify({
-            "message": f"Upload error: {str(e)}"
+            "message": f"Upload error: {error}"
         }), 500
 
 
@@ -317,7 +318,9 @@ def health():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(
+        os.environ.get("PORT", 5000)
+    )
 
     app.run(
         host="0.0.0.0",
