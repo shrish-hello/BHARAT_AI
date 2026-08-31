@@ -10,94 +10,62 @@
     box-sizing: border-box;
 }
 
-:root {
-    --bg: #f7f8fa;
-    --card: #ffffff;
-    --text: #202124;
-    --muted: #73777d;
-    --border: #e3e5e8;
-    --dark: #202124;
-    --green: #1fa463;
-    --green-light: #e9f8f0;
-    --danger: #d93025;
-}
-
 body {
     margin: 0;
     font-family: Arial, Helvetica, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    height: 100vh;
-    overflow: hidden;
+    background: #f7f8fa;
+    color: #202124;
 }
 
 header {
-    height: 74px;
+    height: 72px;
     background: white;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid #e5e5e5;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 34px;
+    padding: 0 32px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-.brand {
+.logo-area {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
-.brand h1 {
-    margin: 0;
+.logo {
     font-size: 25px;
-    font-weight: 750;
-    letter-spacing: -0.5px;
+    font-weight: 800;
 }
 
-.brand span {
-    color: var(--muted);
+.subtitle {
+    color: #777;
     font-size: 14px;
 }
 
-.status {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 13px;
-    color: #555;
+.online {
+    color: #238636;
+    font-size: 14px;
+    font-weight: 600;
 }
 
-.status-dot {
-    width: 9px;
-    height: 9px;
+.online::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    background: #2da44e;
     border-radius: 50%;
-    background: #22a447;
+    display: inline-block;
+    margin-right: 7px;
 }
 
-.app {
-    height: calc(100vh - 74px);
+.header-buttons {
     display: flex;
-    flex-direction: column;
-}
-
-.topbar {
-    min-height: 56px;
-    padding: 10px 28px;
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 12px;
-}
-
-.account-area {
-    display: flex;
-    align-items: center;
     gap: 10px;
-}
-
-.account-name {
-    font-size: 14px;
-    color: #555;
+    align-items: center;
 }
 
 button {
@@ -106,45 +74,75 @@ button {
     font-family: inherit;
 }
 
-.small-btn {
-    padding: 9px 15px;
-    border-radius: 9px;
-    background: white;
-    border: 1px solid var(--border);
-    font-size: 13px;
-}
-
-.small-btn:hover {
-    background: #f3f4f6;
-}
-
-.login-btn {
-    background: var(--dark);
+.header-btn {
+    background: #111;
     color: white;
-    border: none;
+    padding: 10px 17px;
+    border-radius: 9px;
+    font-weight: 600;
+}
+
+.header-btn.secondary {
+    background: #f1f1f1;
+    color: #222;
+}
+
+.user-info {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.user-name {
+    font-weight: 700;
+}
+
+.logout-btn {
+    background: #111;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+#app {
+    max-width: 1100px;
+    margin: auto;
+    min-height: calc(100vh - 72px);
+    display: flex;
+    flex-direction: column;
 }
 
 .chat {
     flex: 1;
-    overflow-y: auto;
-    padding: 20px 30px 150px;
+    padding: 35px 25px 160px;
 }
 
-.messages {
-    max-width: 920px;
-    margin: auto;
+.welcome {
+    text-align: center;
+    margin-top: 80px;
 }
 
-.message-row {
+.welcome h1 {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+.welcome p {
+    color: #777;
+    font-size: 16px;
+}
+
+.message {
     display: flex;
-    margin: 18px 0;
+    margin: 20px 0;
 }
 
-.message-row.user {
+.message.user {
     justify-content: flex-end;
 }
 
-.message-row.ai {
+.message.bot {
     justify-content: flex-start;
 }
 
@@ -152,165 +150,167 @@ button {
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    background: #e8eefb;
-    color: #3157a4;
     display: flex;
     justify-content: center;
     align-items: center;
     margin-right: 10px;
+    background: #e9eef6;
     font-weight: bold;
-    font-size: 13px;
     flex-shrink: 0;
 }
 
+.message.user .avatar {
+    order: 2;
+    margin-right: 0;
+    margin-left: 10px;
+    background: #111;
+    color: white;
+}
+
 .bubble {
-    max-width: min(720px, 80%);
-    padding: 14px 17px;
+    max-width: 75%;
+    padding: 15px 18px;
     border-radius: 16px;
     line-height: 1.55;
     white-space: pre-wrap;
-    font-size: 15px;
 }
 
-.ai .bubble {
+.message.bot .bubble {
     background: white;
-    border: 1px solid var(--border);
+    border: 1px solid #e5e5e5;
 }
 
-.user .bubble {
-    background: #222427;
+.message.user .bubble {
+    background: #111;
     color: white;
-    border-radius: 16px 16px 5px 16px;
-}
-
-.empty {
-    text-align: center;
-    margin-top: 100px;
-    color: var(--muted);
-}
-
-.empty h2 {
-    color: #222;
-    font-size: 26px;
-    margin-bottom: 8px;
-}
-
-.empty p {
-    margin-top: 0;
 }
 
 .composer-area {
     position: fixed;
+    bottom: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    padding: 18px 25px 24px;
     background: linear-gradient(
-        to top,
-        var(--bg) 75%,
-        rgba(247,248,250,0)
+        transparent,
+        #f7f8fa 25%
     );
+    padding: 35px 20px 20px;
+    z-index: 5;
 }
 
 .composer {
-    max-width: 920px;
+    max-width: 850px;
     margin: auto;
     background: white;
-    border: 1px solid #dfe2e6;
+    border: 1px solid #ddd;
     border-radius: 18px;
-    min-height: 72px;
+    padding: 8px 10px;
     display: flex;
     align-items: center;
-    padding: 8px 10px 8px 16px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.04);
+    box-shadow: 0 5px 25px rgba(0,0,0,.06);
 }
 
-.plus {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: transparent;
-    font-size: 23px;
-    color: #555;
-}
-
-#question {
+.composer input {
     flex: 1;
     border: none;
     outline: none;
-    font-size: 15px;
-    padding: 12px;
+    font-size: 16px;
+    padding: 14px;
     background: transparent;
 }
 
-.send {
-    width: 42px;
-    height: 42px;
+.send-btn {
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
-    background: #202124;
+    background: #111;
     color: white;
     font-size: 18px;
 }
 
-.send:disabled {
-    opacity: 0.45;
+.send-btn:disabled {
+    opacity: .45;
     cursor: not-allowed;
 }
 
-.disclaimer {
-    text-align: center;
-    font-size: 10px;
-    color: #92969b;
-    margin-top: 7px;
+.plus-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: transparent;
+    font-size: 22px;
 }
 
-/* MODAL */
+.status-line {
+    max-width: 850px;
+    margin: 8px auto 0;
+    font-size: 12px;
+    color: #777;
+    text-align: center;
+}
 
-.overlay {
+.modal-bg {
+    display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.48);
-    display: none;
+    background: rgba(0,0,0,.48);
+    z-index: 100;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
     padding: 20px;
 }
 
-.overlay.show {
+.modal-bg.show {
     display: flex;
 }
 
 .modal {
-    width: min(440px, 100%);
     background: white;
-    border-radius: 20px;
+    width: 100%;
+    max-width: 470px;
+    max-height: 92vh;
+    overflow-y: auto;
+    border-radius: 22px;
     padding: 28px;
-    box-shadow: 0 20px 70px rgba(0,0,0,0.25);
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+
+.modal-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
 }
 
 .modal h2 {
-    margin: 0 0 7px;
-    font-size: 24px;
+    margin: 0 0 8px;
+    font-size: 25px;
 }
 
-.modal-subtitle {
-    color: var(--muted);
+.modal p.description {
+    margin-top: 0;
+    color: #777;
     font-size: 14px;
-    margin-bottom: 22px;
+}
+
+.close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #f1f1f1;
+    font-size: 20px;
 }
 
 .tabs {
     display: flex;
-    background: #f1f2f4;
+    background: #f1f1f1;
     border-radius: 10px;
     padding: 3px;
-    margin-bottom: 20px;
+    margin: 20px 0;
 }
 
 .tab {
     flex: 1;
-    padding: 10px;
+    padding: 11px;
     border-radius: 8px;
     background: transparent;
     font-weight: 600;
@@ -318,191 +318,152 @@ button {
 
 .tab.active {
     background: white;
-    box-shadow: 0 1px 5px rgba(0,0,0,.08);
+    box-shadow: 0 1px 4px rgba(0,0,0,.1);
 }
 
-.form {
-    display: none;
+.form-group {
+    margin-bottom: 15px;
 }
 
-.form.active {
+.form-group label {
     display: block;
-}
-
-.field {
-    margin-bottom: 14px;
-}
-
-.field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-}
-
-.field input,
-.field select {
-    width: 100%;
-    padding: 12px 13px;
-    border: 1px solid #d7dade;
-    border-radius: 9px;
-    outline: none;
     font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 7px;
 }
 
-.field input:focus,
-.field select:focus {
-    border-color: #777;
-}
-
-.checkbox {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    font-size: 12px;
-    line-height: 1.4;
-    color: #555;
-    margin: 15px 0;
-}
-
-.checkbox input {
-    margin-top: 2px;
-}
-
-.primary {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 13px;
+    border: 1px solid #d5d5d5;
     border-radius: 10px;
-    background: #202124;
+    outline: none;
+    font-size: 15px;
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #111;
+}
+
+.guardian-box {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #555;
+}
+
+.guardian-box input {
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    flex-shrink: 0;
+}
+
+.main-action {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    background: #111;
     color: white;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
-.primary:hover {
-    background: #000;
-}
-
-.close {
-    float: right;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #f1f2f4;
-    font-size: 18px;
+.main-action:disabled {
+    opacity: .5;
 }
 
 .error {
-    color: var(--danger);
-    background: #fff0ef;
-    border: 1px solid #ffd2ce;
-    padding: 10px;
+    background: #fff0f0;
+    border: 1px solid #f1b8b8;
+    color: #b42318;
+    padding: 11px;
     border-radius: 9px;
-    font-size: 13px;
     margin-bottom: 14px;
-    display: none;
+    font-size: 14px;
 }
 
 .success {
-    color: #167342;
-    background: #edf9f2;
-    border: 1px solid #c9efd9;
-    padding: 10px;
+    background: #edfdf3;
+    border: 1px solid #a6e3bb;
+    color: #14733c;
+    padding: 11px;
     border-radius: 9px;
-    font-size: 13px;
     margin-bottom: 14px;
-    display: none;
+    font-size: 14px;
 }
 
-/* ACCOUNT CARD */
-
-.account-card {
-    position: fixed;
-    top: 72px;
-    right: 25px;
-    width: 300px;
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 15px;
-    box-shadow: 0 12px 35px rgba(0,0,0,.15);
-    padding: 18px;
-    z-index: 500;
-    display: none;
-}
-
-.account-card.show {
-    display: block;
-}
-
-.account-card h3 {
-    margin: 0 0 3px;
-}
-
-.account-card p {
-    color: var(--muted);
-    font-size: 13px;
-    margin: 4px 0 14px;
-}
-
-.trial-box {
-    background: var(--green-light);
+.trial-card {
+    background: #f5f5f5;
     border-radius: 12px;
-    padding: 13px;
-    margin-bottom: 13px;
-}
-
-.trial-title {
-    font-weight: bold;
-    color: #176f44;
-}
-
-.usage {
+    padding: 14px;
+    margin-bottom: 15px;
     font-size: 13px;
     color: #555;
-    margin-top: 5px;
 }
 
-.logout {
-    width: 100%;
-    padding: 10px;
-    border-radius: 9px;
-    background: #f1f2f4;
-    color: #333;
+.hidden {
+    display: none !important;
 }
 
-.loading {
-    opacity: 0.6;
+.file-input {
+    display: none;
 }
 
-@media (max-width: 650px) {
+.membership-card {
+    background: #111;
+    color: white;
+    padding: 20px;
+    border-radius: 15px;
+    margin-top: 18px;
+}
+
+.membership-card h3 {
+    margin-top: 0;
+}
+
+.membership-price {
+    font-size: 30px;
+    font-weight: 800;
+}
+
+.small-note {
+    font-size: 12px;
+    color: #777;
+    margin-top: 12px;
+}
+
+.membership-card .small-note {
+    color: #bbb;
+}
+
+@media(max-width:700px) {
     header {
-        padding: 0 17px;
+        padding: 0 15px;
     }
 
-    .brand h1 {
-        font-size: 21px;
-    }
-
-    .brand span {
+    .subtitle,
+    .online {
         display: none;
     }
 
     .chat {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-
-    .composer-area {
-        padding-left: 10px;
-        padding-right: 10px;
+        padding-left: 12px;
+        padding-right: 12px;
     }
 
     .bubble {
-        max-width: 88%;
+        max-width: 85%;
     }
 
-    .account-name {
-        display: none;
+    .welcome h1 {
+        font-size: 30px;
     }
 }
 </style>
@@ -511,170 +472,174 @@ button {
 <body>
 
 <header>
-    <div class="brand">
-        <h1>BHARAT AI</h1>
-        <span>Study Tutor</span>
+
+    <div class="logo-area">
+        <div class="logo">BHARAT AI</div>
+        <div class="subtitle">Study Tutor</div>
     </div>
 
-    <div class="status">
-        <span class="status-dot"></span>
-        <span>Online</span>
+    <div id="loggedOutButtons" class="header-buttons">
+        <button class="header-btn secondary" onclick="openAuth('login')">
+            Login
+        </button>
+
+        <button class="header-btn" onclick="openAuth('register')">
+            Create Account
+        </button>
     </div>
+
+    <div id="loggedInArea" class="user-info">
+        <span class="user-name" id="headerUserName"></span>
+        <button class="logout-btn" onclick="logout()">
+            Logout
+        </button>
+    </div>
+
+    <div class="online">
+        Online
+    </div>
+
 </header>
 
-<div class="app">
 
-    <div class="topbar">
-        <div class="account-area" id="loggedOutArea">
-            <button class="small-btn login-btn" onclick="openAuth('login')">
-                Login
-            </button>
-
-            <button class="small-btn" onclick="openAuth('register')">
-                Create Account
-            </button>
-        </div>
-
-        <div class="account-area" id="loggedInArea" style="display:none">
-            <span class="account-name" id="accountName"></span>
-            <button class="small-btn" onclick="toggleAccountCard()">
-                Account
-            </button>
-        </div>
-    </div>
+<div id="app">
 
     <main class="chat" id="chat">
-        <div class="messages" id="messages">
 
-            <div class="empty" id="emptyState">
-                <h2>Welcome to BHARAT AI 🇮🇳</h2>
-                <p>Your AI study tutor.</p>
-                <p>Login or create a student account to start learning.</p>
-            </div>
-
+        <div class="welcome" id="welcome">
+            <h1>How can I help you learn?</h1>
+            <p>
+                Ask BHARAT AI anything about your studies.
+            </p>
         </div>
+
     </main>
 
 </div>
 
+
 <div class="composer-area">
+
     <div class="composer">
 
-        <button class="plus" title="More options">+</button>
+        <button
+            class="plus-btn"
+            onclick="document.getElementById('fileInput').click()"
+            title="Upload study material">
+            +
+        </button>
 
         <input
-            id="question"
+            id="questionInput"
             type="text"
-            placeholder="Ask BHARAT AI anything..."
+            placeholder="Login to ask BHARAT AI..."
             autocomplete="off"
+            disabled
         >
 
         <button
-            class="send"
+            class="send-btn"
             id="sendButton"
-            onclick="sendQuestion()"
-            disabled
-        >➤</button>
+            onclick="askQuestion()"
+            disabled>
+            ➤
+        </button>
 
     </div>
 
-    <div class="disclaimer">
+    <input
+        type="file"
+        id="fileInput"
+        class="file-input"
+        accept=".txt,.pdf,.docx"
+        onchange="uploadFile()"
+    >
+
+    <div class="status-line" id="statusLine">
         BHARAT AI can make mistakes. Check important answers.
     </div>
-</div>
-
-
-<!-- ACCOUNT CARD -->
-
-<div class="account-card" id="accountCard">
-
-    <h3 id="cardName">Student</h3>
-    <p id="cardEmail"></p>
-
-    <div class="trial-box">
-        <div class="trial-title" id="planTitle">
-            7-Day Free Trial
-        </div>
-
-        <div class="usage" id="usageText">
-            Loading usage...
-        </div>
-    </div>
-
-    <button class="logout" onclick="logout()">
-        Log out
-    </button>
 
 </div>
 
 
 <!-- AUTH MODAL -->
 
-<div class="overlay" id="authOverlay">
+<div class="modal-bg" id="authModal">
 
     <div class="modal">
 
-        <button class="close" onclick="closeAuth()">×</button>
+        <div class="modal-top">
 
-        <h2 id="authTitle">Welcome back</h2>
+            <div>
+                <h2 id="modalTitle">Create your account</h2>
+                <p class="description" id="modalDescription">
+                    Create a student account and start your 7-day free trial.
+                </p>
+            </div>
 
-        <div class="modal-subtitle" id="authSubtitle">
-            Login to continue learning with BHARAT AI.
+            <button class="close" onclick="closeAuth()">
+                ×
+            </button>
+
         </div>
+
 
         <div class="tabs">
 
             <button
-                class="tab active"
                 id="loginTab"
-                onclick="switchAuth('login')"
-            >
+                class="tab"
+                onclick="switchAuth('login')">
                 Login
             </button>
 
             <button
-                class="tab"
                 id="registerTab"
-                onclick="switchAuth('register')"
-            >
+                class="tab"
+                onclick="switchAuth('register')">
                 Create Account
             </button>
 
         </div>
 
-        <div class="error" id="authError"></div>
-        <div class="success" id="authSuccess"></div>
+
+        <div id="authMessage"></div>
 
 
         <!-- LOGIN -->
 
-        <form
-            class="form active"
-            id="loginForm"
-            onsubmit="login(event)"
-        >
+        <form id="loginForm" onsubmit="login(event)">
 
-            <div class="field">
+            <div class="form-group">
                 <label>Email</label>
+
                 <input
-                    id="loginEmail"
                     type="email"
-                    placeholder="student@example.com"
+                    id="loginEmail"
                     required
+                    autocomplete="email"
+                    placeholder="Enter your email"
                 >
             </div>
 
-            <div class="field">
+
+            <div class="form-group">
                 <label>Password</label>
+
                 <input
-                    id="loginPassword"
                     type="password"
-                    placeholder="Your password"
+                    id="loginPassword"
                     required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
                 >
             </div>
 
-            <button class="primary" id="loginButton">
+
+            <button
+                type="submit"
+                class="main-action"
+                id="loginButton">
                 Login
             </button>
 
@@ -684,80 +649,179 @@ button {
         <!-- REGISTER -->
 
         <form
-            class="form"
             id="registerForm"
-            onsubmit="register(event)"
-        >
+            class="hidden"
+            onsubmit="register(event)">
 
-            <div class="field">
-                <label>Student name</label>
+            <div class="form-group">
+
+                <label>
+                    Student name
+                </label>
+
                 <input
-                    id="registerName"
                     type="text"
-                    placeholder="Student name"
+                    id="studentName"
                     required
+                    autocomplete="name"
+                    placeholder="Enter student name"
                 >
+
             </div>
 
-            <div class="field">
-                <label>Email</label>
+
+            <div class="form-group">
+
+                <label>
+                    Email
+                </label>
+
                 <input
-                    id="registerEmail"
                     type="email"
-                    placeholder="student@example.com"
+                    id="registerEmail"
                     required
+                    autocomplete="email"
+                    placeholder="Enter email"
                 >
+
             </div>
 
-            <div class="field">
-                <label>Grade</label>
 
-                <select id="registerGrade" required>
-                    <option value="">Select grade</option>
-                    <option>Class 1</option>
-                    <option>Class 2</option>
-                    <option>Class 3</option>
-                    <option>Class 4</option>
-                    <option>Class 5</option>
-                    <option>Class 6</option>
-                    <option>Class 7</option>
-                    <option>Class 8</option>
-                    <option>Class 9</option>
-                    <option>Class 10</option>
-                    <option>Class 11</option>
-                    <option>Class 12</option>
+            <div class="form-group">
+
+                <label>
+                    Grade
+                </label>
+
+                <select id="grade" required>
+
+                    <option value="">
+                        Select grade
+                    </option>
+
+                    <option value="Class 1">
+                        Class 1
+                    </option>
+
+                    <option value="Class 2">
+                        Class 2
+                    </option>
+
+                    <option value="Class 3">
+                        Class 3
+                    </option>
+
+                    <option value="Class 4">
+                        Class 4
+                    </option>
+
+                    <option value="Class 5">
+                        Class 5
+                    </option>
+
+                    <option value="Class 6">
+                        Class 6
+                    </option>
+
+                    <option value="Class 7">
+                        Class 7
+                    </option>
+
+                    <option value="Class 8">
+                        Class 8
+                    </option>
+
+                    <option value="Class 9">
+                        Class 9
+                    </option>
+
+                    <option value="Class 10">
+                        Class 10
+                    </option>
+
+                    <option value="Class 11">
+                        Class 11
+                    </option>
+
+                    <option value="Class 12">
+                        Class 12
+                    </option>
+
                 </select>
+
             </div>
 
-            <div class="field">
-                <label>Password</label>
+
+            <div class="form-group">
+
+                <label>
+                    Password
+                </label>
+
                 <input
-                    id="registerPassword"
                     type="password"
-                    placeholder="Create a password"
-                    minlength="6"
+                    id="registerPassword"
                     required
+                    minlength="6"
+                    autocomplete="new-password"
+                    placeholder="At least 6 characters"
                 >
+
             </div>
 
-            <label class="checkbox">
+
+            <div class="guardian-box">
+
                 <input
-                    id="guardianConsent"
                     type="checkbox"
+                    id="guardianConfirmed"
+                    name="guardian_confirmed"
                     required
                 >
 
-                <span>
-                    I confirm that a parent/guardian is aware of
-                    this student account and agrees to its use.
-                </span>
-            </label>
+                <label for="guardianConfirmed">
+                    I confirm that a parent/guardian is aware of this
+                    student account and agrees to its use.
+                </label>
 
-            <button class="primary" id="registerButton">
+            </div>
+
+
+            <button
+                type="submit"
+                class="main-action"
+                id="registerButton">
                 Create Account & Start Trial
             </button>
 
+
+            <div class="small-note">
+                Your free trial lasts 7 days and has a daily question limit.
+            </div>
+
         </form>
+
+
+        <div class="membership-card">
+
+            <h3>
+                BHARAT AI Lifetime Membership
+            </h3>
+
+            <div class="membership-price">
+                ₹1,000
+            </div>
+
+            <p>
+                Lifetime membership subject to the applicable usage limits.
+            </p>
+
+            <div class="small-note">
+                Any real payment should be handled through an appropriate
+                payment provider with parent/guardian involvement where required.
+            </div>
+
+        </div>
 
     </div>
 
@@ -766,120 +830,285 @@ button {
 
 <script>
 
-const API = {
-    login: "/login",
-    register: "/register",
-    logout: "/logout",
-    session: "/me",
-    ask: "/ask"
-};
-
 let currentUser = null;
-let accountCardOpen = false;
+let accountStatus = null;
 
 
-/* ---------------- AUTH UI ---------------- */
+/* ---------------------------------------------
+   AUTH MODAL
+--------------------------------------------- */
 
 function openAuth(mode = "login") {
-    document.getElementById("authOverlay").classList.add("show");
+
+    document
+        .getElementById("authModal")
+        .classList
+        .add("show");
+
     switchAuth(mode);
 }
 
+
 function closeAuth() {
-    document.getElementById("authOverlay").classList.remove("show");
-    clearAuthMessages();
+
+    document
+        .getElementById("authModal")
+        .classList
+        .remove("show");
+
+    document
+        .getElementById("authMessage")
+        .innerHTML = "";
 }
+
 
 function switchAuth(mode) {
 
-    const login = mode === "login";
+    const loginForm =
+        document.getElementById("loginForm");
 
-    document.getElementById("loginForm").classList.toggle("active", login);
-    document.getElementById("registerForm").classList.toggle("active", !login);
+    const registerForm =
+        document.getElementById("registerForm");
 
-    document.getElementById("loginTab").classList.toggle("active", login);
-    document.getElementById("registerTab").classList.toggle("active", !login);
+    const loginTab =
+        document.getElementById("loginTab");
 
-    document.getElementById("authTitle").textContent =
-        login ? "Welcome back" : "Create your account";
+    const registerTab =
+        document.getElementById("registerTab");
 
-    document.getElementById("authSubtitle").textContent =
-        login
-        ? "Login to continue learning with BHARAT AI."
-        : "Create a student account and start your 7-day free trial.";
+    const title =
+        document.getElementById("modalTitle");
 
-    clearAuthMessages();
+    const description =
+        document.getElementById("modalDescription");
+
+    document
+        .getElementById("authMessage")
+        .innerHTML = "";
+
+    if (mode === "login") {
+
+        loginForm.classList.remove("hidden");
+        registerForm.classList.add("hidden");
+
+        loginTab.classList.add("active");
+        registerTab.classList.remove("active");
+
+        title.textContent = "Welcome back";
+
+        description.textContent =
+            "Login to continue learning with BHARAT AI.";
+
+    } else {
+
+        loginForm.classList.add("hidden");
+        registerForm.classList.remove("hidden");
+
+        loginTab.classList.remove("active");
+        registerTab.classList.add("active");
+
+        title.textContent = "Create your account";
+
+        description.textContent =
+            "Create a student account and start your 7-day free trial.";
+
+    }
 }
 
-function clearAuthMessages() {
-    document.getElementById("authError").style.display = "none";
-    document.getElementById("authSuccess").style.display = "none";
-}
+
+/* ---------------------------------------------
+   MESSAGE HELPERS
+--------------------------------------------- */
 
 function showAuthError(message) {
-    const box = document.getElementById("authError");
-    box.textContent = message;
-    box.style.display = "block";
+
+    document.getElementById("authMessage").innerHTML =
+        `<div class="error">${escapeHtml(message)}</div>`;
 }
+
 
 function showAuthSuccess(message) {
-    const box = document.getElementById("authSuccess");
-    box.textContent = message;
-    box.style.display = "block";
+
+    document.getElementById("authMessage").innerHTML =
+        `<div class="success">${escapeHtml(message)}</div>`;
 }
 
 
-/* ---------------- API HELPER ---------------- */
+function escapeHtml(text) {
 
-async function apiRequest(url, options = {}) {
+    const div = document.createElement("div");
 
-    const opts = {
-        credentials: "include",
-        ...options,
-        headers: {
-            ...(options.headers || {})
-        }
-    };
+    div.textContent = text;
 
-    if (opts.body && typeof opts.body !== "string") {
-        opts.headers["Content-Type"] = "application/json";
-        opts.body = JSON.stringify(opts.body);
+    return div.innerHTML;
+}
+
+
+/* ---------------------------------------------
+   REGISTER
+--------------------------------------------- */
+
+async function register(event) {
+
+    event.preventDefault();
+
+    const name =
+        document.getElementById("studentName").value.trim();
+
+    const email =
+        document.getElementById("registerEmail").value.trim();
+
+    const grade =
+        document.getElementById("grade").value;
+
+    const password =
+        document.getElementById("registerPassword").value;
+
+    const guardianCheckbox =
+        document.getElementById("guardianConfirmed");
+
+
+    /*
+       IMPORTANT:
+       This sends the exact field expected by web.py:
+       guardian_confirmed
+    */
+
+    const guardianConfirmed =
+        guardianCheckbox.checked;
+
+
+    if (!guardianConfirmed) {
+
+        showAuthError(
+            "A parent or guardian must approve this student account."
+        );
+
+        guardianCheckbox.focus();
+
+        return;
     }
 
-    const response = await fetch(url, opts);
 
-    let data = null;
+    const button =
+        document.getElementById("registerButton");
+
+    button.disabled = true;
+
+    button.textContent = "Creating account...";
+
 
     try {
-        data = await response.json();
-    } catch {
-        data = {};
+
+        const response =
+            await fetch("/register", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    name: name,
+
+                    email: email,
+
+                    grade: grade,
+
+                    password: password,
+
+                    guardian_confirmed:
+                        guardianConfirmed
+
+                })
+
+            });
+
+
+        let data;
+
+        try {
+
+            data = await response.json();
+
+        } catch {
+
+            throw new Error(
+                "The server returned an invalid response."
+            );
+
+        }
+
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.message ||
+                data.answer ||
+                "Unable to create the account."
+            );
+
+        }
+
+
+        currentUser = data.user;
+
+        accountStatus = {
+            membership: "trial",
+            trial_days_remaining: data.trial_days,
+            daily_limit: data.daily_limit,
+            daily_used: 0,
+            daily_remaining: data.daily_limit
+        };
+
+
+        showAuthSuccess(
+            "Account created successfully. Your 7-day free trial has started."
+        );
+
+
+        setTimeout(() => {
+
+            closeAuth();
+
+            updateUI();
+
+            addBotMessage(
+                `Welcome ${currentUser.name}! Your 7-day BHARAT AI free trial has started. You can ask up to ${data.daily_limit} questions per day.`
+            );
+
+        }, 700);
+
+
+    } catch (error) {
+
+        showAuthError(
+            error.message ||
+            "Unable to create your account."
+        );
+
+    } finally {
+
+        button.disabled = false;
+
+        button.textContent =
+            "Create Account & Start Trial";
+
     }
 
-    if (!response.ok) {
-        const message =
-            data.message ||
-            data.error ||
-            data.answer ||
-            `Server error (${response.status})`;
-
-        const error = new Error(message);
-        error.status = response.status;
-        error.data = data;
-        throw error;
-    }
-
-    return data;
 }
 
 
-/* ---------------- LOGIN ---------------- */
+/* ---------------------------------------------
+   LOGIN
+--------------------------------------------- */
 
 async function login(event) {
 
     event.preventDefault();
 
-    const button = document.getElementById("loginButton");
 
     const email =
         document.getElementById("loginEmail").value.trim();
@@ -887,526 +1116,613 @@ async function login(event) {
     const password =
         document.getElementById("loginPassword").value;
 
-    clearAuthMessages();
-
-    button.disabled = true;
-    button.textContent = "Logging in...";
-
-    try {
-
-        const data = await apiRequest(API.login, {
-            method: "POST",
-            body: {
-                email,
-                password
-            }
-        });
-
-        currentUser =
-            data.user ||
-            data.account ||
-            data;
-
-        showAuthSuccess("Login successful.");
-
-        await refreshSession();
-
-        setTimeout(() => {
-            closeAuth();
-        }, 500);
-
-    } catch (error) {
-
-        showAuthError(
-            error.message || "Unable to log in."
-        );
-
-    } finally {
-
-        button.disabled = false;
-        button.textContent = "Login";
-    }
-}
-
-
-/* ---------------- REGISTER ---------------- */
-
-async function register(event) {
-
-    event.preventDefault();
 
     const button =
-        document.getElementById("registerButton");
-
-    const name =
-        document.getElementById("registerName").value.trim();
-
-    const email =
-        document.getElementById("registerEmail").value.trim();
-
-    const grade =
-        document.getElementById("registerGrade").value;
-
-    const password =
-        document.getElementById("registerPassword").value;
-
-    const guardianConsent =
-        document.getElementById("guardianConsent").checked;
-
-    clearAuthMessages();
-
-    if (!guardianConsent) {
-        showAuthError(
-            "Please confirm that a parent/guardian is aware of the account."
-        );
-        return;
-    }
+        document.getElementById("loginButton");
 
     button.disabled = true;
-    button.textContent = "Creating account...";
+
+    button.textContent = "Logging in...";
+
 
     try {
 
-        const data = await apiRequest(API.register, {
-            method: "POST",
-            body: {
-                name,
-                email,
-                grade,
-                password,
-                guardian_consent: true
-            }
-        });
+        const response =
+            await fetch("/login", {
 
-        currentUser =
-            data.user ||
-            data.account ||
-            data;
+                method: "POST",
 
-        showAuthSuccess(
-            "Account created. Your 7-day free trial has started."
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    email: email,
+
+                    password: password
+
+                })
+
+            });
+
+
+        let data;
+
+        try {
+
+            data = await response.json();
+
+        } catch {
+
+            throw new Error(
+                "The server returned an invalid response."
+            );
+
+        }
+
+
+        if (!response.ok || !data.success) {
+
+            throw new Error(
+                data.message ||
+                "Incorrect email or password."
+            );
+
+        }
+
+
+        currentUser = data.user;
+
+        accountStatus = data.status;
+
+
+        closeAuth();
+
+        updateUI();
+
+
+        addBotMessage(
+            `Welcome back, ${currentUser.name}! How can I help you study today?`
         );
 
-        await refreshSession();
-
-        setTimeout(() => {
-            closeAuth();
-        }, 800);
 
     } catch (error) {
 
         showAuthError(
-            error.message || "Unable to create the account."
+            error.message ||
+            "Unable to log in."
         );
 
     } finally {
 
         button.disabled = false;
-        button.textContent = "Create Account & Start Trial";
+
+        button.textContent = "Login";
+
     }
+
 }
 
 
-/* ---------------- SESSION ---------------- */
+/* ---------------------------------------------
+   CHECK SESSION
+--------------------------------------------- */
 
-async function refreshSession() {
+async function checkSession() {
 
     try {
 
-        const data = await apiRequest(API.session, {
-            method: "GET"
-        });
+        const response =
+            await fetch("/me");
 
-        if (data && data.logged_in === false) {
-            setLoggedOut();
+        if (!response.ok) {
+
+            updateUI();
+
             return;
         }
 
-        currentUser =
-            data.user ||
-            data.account ||
-            data;
 
-        if (!currentUser) {
-            setLoggedOut();
-            return;
+        const data =
+            await response.json();
+
+
+        if (data.success && data.logged_in) {
+
+            currentUser = data.user;
+
+            accountStatus = data.status;
+
+            updateUI();
+
         }
-
-        setLoggedIn(currentUser);
 
     } catch {
 
-        setLoggedOut();
+        updateUI();
+
     }
+
 }
 
 
-/* ---------------- LOGGED IN UI ---------------- */
+/* ---------------------------------------------
+   UPDATE UI
+--------------------------------------------- */
 
-function setLoggedIn(user) {
+function updateUI() {
 
-    currentUser = user;
+    const loggedOutButtons =
+        document.getElementById("loggedOutButtons");
 
-    document.getElementById("loggedOutArea")
-        .style.display = "none";
+    const loggedInArea =
+        document.getElementById("loggedInArea");
 
-    document.getElementById("loggedInArea")
-        .style.display = "flex";
+    const questionInput =
+        document.getElementById("questionInput");
 
-    const name =
-        user.name ||
-        user.student_name ||
-        user.email ||
-        "Student";
+    const sendButton =
+        document.getElementById("sendButton");
 
-    const email =
-        user.email ||
-        "";
+    const headerUserName =
+        document.getElementById("headerUserName");
 
-    document.getElementById("accountName")
-        .textContent = name;
-
-    document.getElementById("cardName")
-        .textContent = name;
-
-    document.getElementById("cardEmail")
-        .textContent = email;
-
-    document.getElementById("sendButton")
-        .disabled = false;
-
-    document.getElementById("question")
-        .placeholder = "Ask BHARAT AI anything...";
-
-    updateUsage(user);
-}
-
-function setLoggedOut() {
-
-    currentUser = null;
-
-    document.getElementById("loggedOutArea")
-        .style.display = "flex";
-
-    document.getElementById("loggedInArea")
-        .style.display = "none";
-
-    document.getElementById("accountCard")
-        .classList.remove("show");
-
-    document.getElementById("sendButton")
-        .disabled = true;
-
-    document.getElementById("question")
-        .placeholder = "Login to ask BHARAT AI...";
-}
+    const statusLine =
+        document.getElementById("statusLine");
 
 
-/* ---------------- USAGE ---------------- */
+    if (currentUser) {
 
-function updateUsage(user) {
+        loggedOutButtons.style.display = "none";
 
-    const used =
-        user.daily_used ??
-        user.usage_today ??
-        user.questions_today ??
-        0;
+        loggedInArea.style.display = "flex";
 
-    const limit =
-        user.daily_limit ??
-        user.limit ??
-        10;
+        headerUserName.textContent =
+            currentUser.name;
 
-    const plan =
-        user.plan ||
-        user.subscription ||
-        "free_trial";
+        questionInput.disabled = false;
 
-    document.getElementById("usageText")
-        .textContent =
-        `${used} / ${limit} questions used today`;
+        sendButton.disabled = false;
 
-    const title =
-        plan === "lifetime"
-        ? "BHARAT AI Lifetime Membership"
-        : "7-Day Free Trial";
-
-    document.getElementById("planTitle")
-        .textContent = title;
-}
+        questionInput.placeholder =
+            "Ask BHARAT AI anything...";
 
 
-/* ---------------- ACCOUNT CARD ---------------- */
+        if (accountStatus) {
 
-function toggleAccountCard() {
+            let statusText = "";
 
-    accountCardOpen = !accountCardOpen;
 
-    document.getElementById("accountCard")
-        .classList.toggle(
-            "show",
-            accountCardOpen
-        );
+            if (
+                accountStatus.membership ===
+                "lifetime"
+            ) {
+
+                statusText =
+                    `Lifetime membership • ${accountStatus.daily_remaining ?? 0} questions remaining today`;
+
+            } else if (
+                accountStatus.membership ===
+                "expired"
+            ) {
+
+                statusText =
+                    "Your 7-day free trial has ended.";
+
+                questionInput.disabled = true;
+
+                sendButton.disabled = true;
+
+            } else {
+
+                statusText =
+                    `${accountStatus.trial_days_remaining ?? 0} trial days remaining • ${accountStatus.daily_remaining ?? 0} questions remaining today`;
+
+            }
+
+            statusLine.textContent =
+                statusText;
+
+        }
+
+    } else {
+
+        loggedOutButtons.style.display = "flex";
+
+        loggedInArea.style.display = "none";
+
+        questionInput.disabled = true;
+
+        sendButton.disabled = true;
+
+        questionInput.placeholder =
+            "Login to ask BHARAT AI...";
+
+        statusLine.textContent =
+            "Login to ask BHARAT AI. BHARAT AI can make mistakes. Check important answers.";
+
+    }
+
 }
 
 
-/* ---------------- LOGOUT ---------------- */
+/* ---------------------------------------------
+   LOGOUT
+--------------------------------------------- */
 
 async function logout() {
 
     try {
 
-        await apiRequest(API.logout, {
-            method: "POST"
-        });
+        await fetch(
+            "/logout",
+            {
+                method: "POST"
+            }
+        );
 
-    } catch {
-        // Even if the server already logged out,
-        // clear the local UI.
-    }
+    } catch {}
 
-    setLoggedOut();
+    currentUser = null;
 
-    addMessage(
-        "ai",
-        "You have been logged out. Login again whenever you want to continue learning."
+    accountStatus = null;
+
+    updateUI();
+
+    addBotMessage(
+        "You have been logged out. Login again to continue using BHARAT AI."
     );
+
 }
 
 
-/* ---------------- CHAT ---------------- */
+/* ---------------------------------------------
+   ASK QUESTION
+--------------------------------------------- */
 
-async function sendQuestion() {
+async function askQuestion() {
 
     if (!currentUser) {
+
         openAuth("login");
+
         return;
     }
 
-    const input =
-        document.getElementById("question");
 
-    const button =
-        document.getElementById("sendButton");
+    const input =
+        document.getElementById("questionInput");
 
     const question =
         input.value.trim();
 
-    if (!question) return;
+
+    if (!question) {
+        return;
+    }
+
 
     input.value = "";
 
-    addMessage("user", question);
+    input.disabled = true;
 
-    button.disabled = true;
+    document.getElementById("sendButton").disabled = true;
 
-    const loadingId =
-        addLoadingMessage();
+
+    addUserMessage(question);
+
+    const loading =
+        addBotMessage("Thinking...");
+
 
     try {
 
-        const data = await apiRequest(API.ask, {
-            method: "POST",
-            body: {
-                question
-            }
-        });
+        const response =
+            await fetch("/ask", {
 
-        removeMessage(loadingId);
+                method: "POST",
 
-        const answer =
-            data.answer ||
-            data.response ||
-            data.message ||
-            "I couldn't generate an answer.";
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-        addMessage("ai", answer);
+                body: JSON.stringify({
 
-        if (data.user) {
-            currentUser = data.user;
-            updateUsage(currentUser);
-        }
+                    question: question
 
-        if (
-            data.daily_used !== undefined ||
-            data.usage_today !== undefined
-        ) {
-            updateUsage({
-                ...currentUser,
-                ...data
+                })
+
             });
-        }
 
-    } catch (error) {
 
-        removeMessage(loadingId);
+        let data;
 
-        if (error.status === 401) {
+        try {
 
-            setLoggedOut();
+            data = await response.json();
 
-            addMessage(
-                "ai",
-                "Your session has expired. Please log in again."
+        } catch {
+
+            throw new Error(
+                "The server returned an invalid response."
             );
 
-            openAuth("login");
+        }
 
-        } else if (error.status === 429) {
 
-            addMessage(
-                "ai",
-                error.message ||
-                "You have reached your daily question limit."
+        loading.remove();
+
+
+        if (!response.ok || !data.success) {
+
+            addBotMessage(
+                data.answer ||
+                data.message ||
+                "BHARAT AI could not answer right now."
             );
 
         } else {
 
-            addMessage(
-                "ai",
-                error.message ||
-                "BHARAT AI is temporarily unable to answer. Please try again in a moment."
+            addBotMessage(
+                data.answer ||
+                "I couldn't generate an answer."
             );
+
         }
+
+
+        await refreshAccountStatus();
+
+
+    } catch (error) {
+
+        loading.remove();
+
+        addBotMessage(
+            "Sorry, I couldn't connect to BHARAT AI. Please try again."
+        );
 
     } finally {
 
-        if (currentUser) {
-            button.disabled = false;
+        input.disabled = false;
+
+        document.getElementById("sendButton").disabled =
+            false;
+
+        input.focus();
+
+    }
+
+}
+
+
+/* ---------------------------------------------
+   ENTER KEY
+--------------------------------------------- */
+
+document
+    .getElementById("questionInput")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                askQuestion();
+
+            }
+
         }
-    }
-}
+    );
 
 
-/* ---------------- CHAT MESSAGES ---------------- */
+/* ---------------------------------------------
+   CHAT MESSAGES
+--------------------------------------------- */
 
-function addMessage(type, text) {
-
-    const messages =
-        document.getElementById("messages");
-
-    const empty =
-        document.getElementById("emptyState");
-
-    if (empty) {
-        empty.remove();
-    }
-
-    const row =
-        document.createElement("div");
-
-    row.className =
-        `message-row ${type}`;
-
-    if (type === "ai") {
-
-        const avatar =
-            document.createElement("div");
-
-        avatar.className = "avatar";
-        avatar.textContent = "B";
-
-        row.appendChild(avatar);
-    }
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className = "bubble";
-    bubble.textContent = text;
-
-    row.appendChild(bubble);
-
-    messages.appendChild(row);
-
-    scrollChat();
-}
-
-function addLoadingMessage() {
-
-    const messages =
-        document.getElementById("messages");
-
-    const row =
-        document.createElement("div");
-
-    const id =
-        "loading-" + Date.now();
-
-    row.id = id;
-    row.className = "message-row ai";
-
-    const avatar =
-        document.createElement("div");
-
-    avatar.className = "avatar";
-    avatar.textContent = "B";
-
-    const bubble =
-        document.createElement("div");
-
-    bubble.className = "bubble";
-    bubble.textContent = "Thinking...";
-
-    row.appendChild(avatar);
-    row.appendChild(bubble);
-
-    messages.appendChild(row);
-
-    scrollChat();
-
-    return id;
-}
-
-function removeMessage(id) {
-
-    const element =
-        document.getElementById(id);
-
-    if (element) {
-        element.remove();
-    }
-}
-
-function scrollChat() {
+function addUserMessage(text) {
 
     const chat =
         document.getElementById("chat");
 
-    chat.scrollTop =
-        chat.scrollHeight;
+    const welcome =
+        document.getElementById("welcome");
+
+    if (welcome) {
+        welcome.remove();
+    }
+
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        "message user";
+
+
+    message.innerHTML = `
+        <div class="bubble">${escapeHtml(text)}</div>
+        <div class="avatar">You</div>
+    `;
+
+
+    chat.appendChild(message);
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+    });
+
 }
 
 
-/* ---------------- ENTER KEY ---------------- */
+function addBotMessage(text) {
 
-document.getElementById("question")
-    .addEventListener("keydown", function(event) {
+    const chat =
+        document.getElementById("chat");
 
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-            event.preventDefault();
-            sendQuestion();
-        }
+    const welcome =
+        document.getElementById("welcome");
+
+    if (welcome) {
+        welcome.remove();
+    }
+
+
+    const message =
+        document.createElement("div");
+
+    message.className =
+        "message bot";
+
+
+    message.innerHTML = `
+        <div class="avatar">B</div>
+        <div class="bubble">${escapeHtml(text)}</div>
+    `;
+
+
+    chat.appendChild(message);
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
     });
 
 
-/* ---------------- CLOSE MODAL ---------------- */
+    return message;
 
-document.getElementById("authOverlay")
-    .addEventListener("click", function(event) {
+}
 
-        if (event.target === this) {
-            closeAuth();
+
+/* ---------------------------------------------
+   REFRESH ACCOUNT STATUS
+--------------------------------------------- */
+
+async function refreshAccountStatus() {
+
+    if (!currentUser) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch("/account/status");
+
+
+        if (!response.ok) {
+            return;
         }
-    });
 
 
-/* ---------------- START ---------------- */
+        const data =
+            await response.json();
 
-refreshSession();
+
+        if (data.success) {
+
+            accountStatus =
+                data.status;
+
+            updateUI();
+
+        }
+
+    } catch {}
+
+}
+
+
+/* ---------------------------------------------
+   FILE UPLOAD
+--------------------------------------------- */
+
+async function uploadFile() {
+
+    if (!currentUser) {
+
+        openAuth("login");
+
+        return;
+    }
+
+
+    const fileInput =
+        document.getElementById("fileInput");
+
+    const file =
+        fileInput.files[0];
+
+
+    if (!file) {
+        return;
+    }
+
+
+    const formData =
+        new FormData();
+
+    formData.append(
+        "file",
+        file
+    );
+
+
+    addBotMessage(
+        `Uploading ${file.name}...`
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/upload",
+                {
+                    method: "POST",
+                    body: formData
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        addBotMessage(
+            data.message ||
+            "File upload completed."
+        );
+
+
+    } catch {
+
+        addBotMessage(
+            "Unable to upload the file."
+        );
+
+    } finally {
+
+        fileInput.value = "";
+
+    }
+
+}
+
+
+/* ---------------------------------------------
+   START
+--------------------------------------------- */
+
+checkSession();
 
 </script>
 
