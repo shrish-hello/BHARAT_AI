@@ -4,548 +4,840 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BHARAT AI</title>
+
 <style>
-*{box-sizing:border-box}
-body{
-margin:0;
-font-family:Arial,Helvetica,sans-serif;
-background:#f5f7fb;
-color:#202124;
-height:100vh;
-overflow:hidden
+* {
+    box-sizing: border-box;
 }
-.header{
-height:70px;
-background:white;
-border-bottom:1px solid #e2e5ea;
-display:flex;
-align-items:center;
-justify-content:space-between;
-padding:0 28px;
-position:relative;
-z-index:5
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f7f7f8;
+    color: #202123;
 }
-.logo{
-font-size:25px;
-font-weight:800;
-letter-spacing:.5px
+
+header {
+    height: 70px;
+    background: white;
+    border-bottom: 1px solid #e5e5e5;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
-.logo span{font-size:14px;font-weight:500;color:#777;margin-left:8px}
-.header-right{display:flex;align-items:center;gap:10px}
-.status{
-font-size:13px;
-padding:8px 12px;
-border-radius:20px;
-background:#edf7ed;
-color:#267326
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
-.main{
-height:calc(100vh - 70px);
-display:flex;
-flex-direction:column
+
+.logo h1 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
 }
-.chat{
-flex:1;
-overflow-y:auto;
-padding:30px 18px 150px
+
+.subtitle {
+    color: #777;
+    font-size: 14px;
 }
-.welcome{
-max-width:900px;
-margin:45px auto 25px;
-text-align:center
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: #555;
 }
-.welcome h1{
-font-size:42px;
-margin:0 0 12px
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #22c55e;
 }
-.welcome p{
-font-size:17px;
-color:#666;
-margin:0
+
+#chat {
+    width: min(1000px, calc(100% - 30px));
+    margin: 0 auto;
+    padding: 35px 0 150px;
 }
-.messages{
-max-width:900px;
-margin:auto
+
+.welcome {
+    text-align: center;
+    margin-top: 70px;
+    color: #555;
 }
-.message{
-display:flex;
-margin:18px 0;
-gap:12px
+
+.welcome h2 {
+    font-size: 32px;
+    margin-bottom: 10px;
+    color: #202123;
 }
-.message.user{justify-content:flex-end}
-.avatar{
-width:38px;
-height:38px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:bold;
-flex-shrink:0;
-background:#e8edf7
+
+.welcome p {
+    font-size: 16px;
 }
-.message.user .avatar{background:#202124;color:white;order:2}
-.bubble{
-max-width:75%;
-padding:14px 17px;
-border-radius:18px;
-line-height:1.55;
-white-space:pre-wrap;
-word-wrap:break-word
+
+.message {
+    display: flex;
+    margin: 22px 0;
+    gap: 12px;
 }
-.message.assistant .bubble{
-background:white;
-border:1px solid #e3e6eb;
-border-top-left-radius:5px
+
+.avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
 }
-.message.user .bubble{
-background:#202124;
-color:white;
-border-top-right-radius:5px
+
+.ai-avatar {
+    background: #e9eefc;
+    color: #3155c7;
 }
-.typing{
-display:inline-flex;
-gap:4px;
-align-items:center
+
+.user-avatar {
+    background: #202123;
+    color: white;
 }
-.dot{
-width:6px;
-height:6px;
-background:#777;
-border-radius:50%;
-animation:blink 1.2s infinite
+
+.bubble {
+    max-width: 82%;
+    padding: 14px 17px;
+    border-radius: 16px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
-.dot:nth-child(2){animation-delay:.2s}
-.dot:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
-.composer-wrap{
-position:fixed;
-bottom:0;
-left:0;
-right:0;
-background:linear-gradient(transparent,#f5f7fb 22%);
-padding:30px 18px 20px;
-z-index:4
+
+.ai-bubble {
+    background: white;
+    border: 1px solid #e5e5e5;
 }
-.composer{
-max-width:900px;
-margin:auto;
-background:white;
-border:1px solid #dfe3e8;
-border-radius:22px;
-padding:10px;
-box-shadow:0 5px 25px rgba(0,0,0,.08)
+
+.user-bubble {
+    background: #202123;
+    color: white;
+    margin-left: auto;
 }
-.input-row{
-display:flex;
-align-items:flex-end;
-gap:8px
+
+.user-message {
+    justify-content: flex-end;
 }
-textarea{
-flex:1;
-border:0;
-outline:0;
-resize:none;
-font:16px Arial;
-padding:13px;
-min-height:48px;
-max-height:150px;
-background:transparent
+
+.user-message .user-avatar {
+    order: 2;
 }
-button{
-border:0;
-cursor:pointer;
-font-weight:600
+
+.user-message .bubble {
+    order: 1;
 }
-.icon-btn{
-width:44px;
-height:44px;
-border-radius:50%;
-background:#f0f2f5;
-font-size:19px
+
+.error-bubble {
+    background: #fff4f4;
+    border: 1px solid #f0caca;
+    color: #8b2525;
 }
-.send{
-width:46px;
-height:46px;
-border-radius:50%;
-background:#202124;
-color:white;
-font-size:18px
+
+.typing {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
 }
-.send:disabled{opacity:.45;cursor:not-allowed}
-.file-info{
-display:none;
-font-size:13px;
-color:#555;
-padding:5px 12px 8px
+
+.typing span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #888;
+    animation: blink 1.2s infinite;
 }
-.file-info.active{display:block}
-.tools{
-display:flex;
-justify-content:space-between;
-align-items:center;
-padding:6px 7px 2px
+
+.typing span:nth-child(2) {
+    animation-delay: .15s;
 }
-.tool-left{display:flex;gap:6px}
-.hidden{display:none}
-.quick{
-max-width:900px;
-margin:0 auto 15px;
-display:flex;
-justify-content:center;
-gap:8px;
-flex-wrap:wrap
+
+.typing span:nth-child(3) {
+    animation-delay: .3s;
 }
-.quick button{
-background:white;
-border:1px solid #ddd;
-padding:9px 13px;
-border-radius:18px;
-font-weight:400
+
+@keyframes blink {
+    0%, 60%, 100% {
+        opacity: .25;
+    }
+    30% {
+        opacity: 1;
+    }
 }
-.quick button:hover{background:#f0f2f5}
-.error{
-background:#fff1f1!important;
-border-color:#ffcaca!important;
-color:#9b2222
+
+.composer-area {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        transparent,
+        #f7f7f8 25%
+    );
+    padding: 25px 15px 18px;
 }
-@media(max-width:650px){
-.header{padding:0 15px}
-.logo{font-size:21px}
-.status{display:none}
-.welcome h1{font-size:32px}
-.bubble{max-width:86%}
-.chat{padding-top:15px}
+
+.composer {
+    width: min(900px, 100%);
+    margin: auto;
+    background: white;
+    border: 1px solid #d9d9d9;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    padding: 10px;
+}
+
+.input-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+textarea {
+    flex: 1;
+    border: none;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    font-size: 16px;
+    min-height: 48px;
+    max-height: 150px;
+    padding: 12px;
+    line-height: 1.4;
+}
+
+.icon-button {
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: #f0f0f0;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.icon-button:hover {
+    background: #e4e4e4;
+}
+
+.send-button {
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 50%;
+    background: #202123;
+    color: white;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.send-button:hover {
+    background: #000;
+}
+
+.send-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.file-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 8px 2px;
+    font-size: 12px;
+    color: #777;
+}
+
+.file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clear-button {
+    border: none;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.clear-button:hover {
+    color: #222;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.notice {
+    text-align: center;
+    font-size: 11px;
+    color: #888;
+    margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+    header {
+        padding: 0 15px;
+    }
+
+    .subtitle {
+        display: none;
+    }
+
+    #chat {
+        width: calc(100% - 20px);
+    }
+
+    .bubble {
+        max-width: 90%;
+    }
+
+    .welcome h2 {
+        font-size: 25px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<header class="header">
-<div class="logo">BHARAT AI <span>Study Tutor</span></div>
-<div class="header-right">
-<div class="status" id="status">● Online</div>
-</div>
+<header>
+    <div class="logo">
+        <h1>BHARAT AI</h1>
+        <span class="subtitle">Study Tutor</span>
+    </div>
+
+    <div class="status">
+        <span class="status-dot"></span>
+        <span>Online</span>
+    </div>
 </header>
 
-<main class="main">
+<main id="chat">
 
-<section class="chat" id="chat">
-<div class="welcome" id="welcome">
-<h1>Learn • Ask • Understand</h1>
-<p>Your AI study tutor for questions, explanations and learning.</p>
-</div>
-<div class="messages" id="messages"></div>
-</section>
-
-<div class="composer-wrap">
-
-<div class="quick" id="quick">
-<button onclick="quickAsk('Explain this topic in simple words.')">Explain simply</button>
-<button onclick="quickAsk('Give me a step-by-step explanation.')">Step by step</button>
-<button onclick="quickAsk('Quiz me on this topic.')">Quiz me</button>
-</div>
-
-<div class="composer">
-
-<div class="file-info" id="fileInfo"></div>
-
-<div class="input-row">
-<button class="icon-btn" id="fileBtn" title="Upload file">＋</button>
-
-<textarea id="question" rows="1" placeholder="Ask BHARAT AI anything..."></textarea>
-
-<button class="icon-btn" id="micBtn" title="Voice input">🎙</button>
-
-<button class="send" id="sendBtn" title="Send">➤</button>
-</div>
-
-<div class="tools">
-<div class="tool-left">
-<span style="font-size:12px;color:#777;padding:10px">BHARAT AI</span>
-</div>
-<span style="font-size:11px;color:#999">AI can make mistakes. Check important answers.</span>
-</div>
-
-</div>
-
-</div>
-
-<input class="hidden" type="file" id="fileInput" accept=".pdf,.txt,.doc,.docx,.png,.jpg,.jpeg">
+    <div class="welcome" id="welcome">
+        <h2>How can I help you study?</h2>
+        <p>Ask BHARAT AI a question in English, Hindi or Hinglish.</p>
+    </div>
 
 </main>
 
+<div class="composer-area">
+
+    <div class="composer">
+
+        <div class="input-row">
+
+            <label class="icon-button" title="Upload study material">
+                +
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".txt,.pdf,.docx"
+                >
+            </label>
+
+            <textarea
+                id="question"
+                placeholder="Ask BHARAT AI anything..."
+                rows="1"
+            ></textarea>
+
+            <button
+                class="icon-button"
+                id="micButton"
+                title="Voice input"
+                type="button"
+            >
+                🎙
+            </button>
+
+            <button
+                class="send-button"
+                id="sendButton"
+                title="Send"
+                type="button"
+            >
+                ➤
+            </button>
+
+        </div>
+
+        <div class="file-row" id="fileRow" style="display:none;">
+            <span>📄</span>
+            <span class="file-name" id="fileName"></span>
+            <button
+                class="clear-button"
+                id="clearButton"
+                type="button"
+            >
+                Clear
+            </button>
+        </div>
+
+    </div>
+
+    <div class="notice">
+        BHARAT AI can make mistakes. Check important answers.
+    </div>
+
+</div>
+
 <script>
-const question=document.getElementById("question");
-const sendBtn=document.getElementById("sendBtn");
-const micBtn=document.getElementById("micBtn");
-const fileBtn=document.getElementById("fileBtn");
-const fileInput=document.getElementById("fileInput");
-const fileInfo=document.getElementById("fileInfo");
-const messages=document.getElementById("messages");
-const welcome=document.getElementById("welcome");
-const chat=document.getElementById("chat");
-const quick=document.getElementById("quick");
-const status=document.getElementById("status");
+const questionBox = document.getElementById("question");
+const sendButton = document.getElementById("sendButton");
+const chat = document.getElementById("chat");
+const welcome = document.getElementById("welcome");
+const fileInput = document.getElementById("fileInput");
+const fileRow = document.getElementById("fileRow");
+const fileName = document.getElementById("fileName");
+const clearButton = document.getElementById("clearButton");
+const micButton = document.getElementById("micButton");
 
-let selectedFile=null;
-let recognition=null;
-let speaking=false;
+let busy = false;
 
-function scrollBottom(){
-chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});
+function addMessage(text, type, error = false) {
+
+    if (welcome) {
+        welcome.style.display = "none";
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "message";
+
+    if (type === "user") {
+        wrapper.classList.add("user-message");
+    }
+
+    const avatar = document.createElement("div");
+    avatar.className =
+        "avatar " +
+        (type === "user" ? "user-avatar" : "ai-avatar");
+
+    avatar.textContent = type === "user" ? "You" : "B";
+
+    const bubble = document.createElement("div");
+
+    bubble.className =
+        "bubble " +
+        (type === "user" ? "user-bubble" : "ai-bubble");
+
+    if (error) {
+        bubble.classList.add("error-bubble");
+    }
+
+    bubble.textContent = text;
+
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
+
+    chat.appendChild(wrapper);
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+    });
+
+    return wrapper;
 }
 
-function addMessage(text,type="assistant",error=false){
-welcome.style.display="none";
-quick.style.display="none";
+function addTyping() {
 
-const row=document.createElement("div");
-row.className="message "+type;
+    if (welcome) {
+        welcome.style.display = "none";
+    }
 
-const avatar=document.createElement("div");
-avatar.className="avatar";
-avatar.textContent=type==="user"?"You":"B";
+    const wrapper = document.createElement("div");
+    wrapper.className = "message";
+    wrapper.id = "typingMessage";
 
-const bubble=document.createElement("div");
-bubble.className="bubble"+(error?" error":"");
-bubble.textContent=text;
+    const avatar = document.createElement("div");
+    avatar.className = "avatar ai-avatar";
+    avatar.textContent = "B";
 
-row.appendChild(avatar);
-row.appendChild(bubble);
-messages.appendChild(row);
-scrollBottom();
+    const bubble = document.createElement("div");
+    bubble.className = "bubble ai-bubble";
 
-return bubble;
+    const typing = document.createElement("div");
+    typing.className = "typing";
+
+    typing.innerHTML =
+        "<span></span><span></span><span></span>";
+
+    bubble.appendChild(typing);
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(bubble);
+
+    chat.appendChild(wrapper);
+
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: "smooth"
+    });
 }
 
-function addTyping(){
-welcome.style.display="none";
-quick.style.display="none";
+function removeTyping() {
+    const element = document.getElementById("typingMessage");
 
-const row=document.createElement("div");
-row.className="message assistant";
-row.id="typing";
-
-const avatar=document.createElement("div");
-avatar.className="avatar";
-avatar.textContent="B";
-
-const bubble=document.createElement("div");
-bubble.className="bubble";
-
-const typing=document.createElement("span");
-typing.className="typing";
-
-for(let i=0;i<3;i++){
-const d=document.createElement("span");
-d.className="dot";
-typing.appendChild(d);
+    if (element) {
+        element.remove();
+    }
 }
 
-bubble.appendChild(typing);
-row.appendChild(avatar);
-row.appendChild(bubble);
-messages.appendChild(row);
-scrollBottom();
+async function sendQuestion() {
+
+    if (busy) {
+        return;
+    }
+
+    const question = questionBox.value.trim();
+
+    if (!question) {
+        return;
+    }
+
+    busy = true;
+    sendButton.disabled = true;
+
+    addMessage(question, "user");
+
+    questionBox.value = "";
+    questionBox.style.height = "48px";
+
+    addTyping();
+
+    try {
+
+        const response = await fetch("/ask", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({
+                question: question
+            })
+        });
+
+        const contentType =
+            response.headers.get("content-type") || "";
+
+        const rawText = await response.text();
+
+        removeTyping();
+
+        if (!response.ok) {
+
+            let errorMessage = rawText;
+
+            if (contentType.includes("application/json")) {
+                try {
+                    const errorData = JSON.parse(rawText);
+
+                    errorMessage =
+                        errorData.answer ||
+                        errorData.message ||
+                        rawText;
+                } catch (e) {
+                }
+            }
+
+            if (!errorMessage) {
+                errorMessage =
+                    "The server returned an error. HTTP " +
+                    response.status;
+            }
+
+            addMessage(
+                "Server error (" +
+                response.status +
+                "):\n\n" +
+                errorMessage,
+                "ai",
+                true
+            );
+
+            return;
+        }
+
+        let data;
+
+        if (contentType.includes("application/json")) {
+
+            try {
+                data = JSON.parse(rawText);
+            } catch (e) {
+
+                addMessage(
+                    "BHARAT AI returned invalid JSON:\n\n" +
+                    rawText,
+                    "ai",
+                    true
+                );
+
+                return;
+            }
+
+        } else {
+
+            addMessage(
+                "The server returned a non-JSON response:\n\n" +
+                rawText,
+                "ai",
+                true
+            );
+
+            return;
+        }
+
+        if (data.answer) {
+
+            addMessage(
+                String(data.answer),
+                "ai"
+            );
+
+        } else {
+
+            addMessage(
+                "BHARAT AI returned an unexpected response:\n\n" +
+                JSON.stringify(data, null, 2),
+                "ai",
+                true
+            );
+        }
+
+    } catch (error) {
+
+        removeTyping();
+
+        addMessage(
+            "Could not connect to BHARAT AI.\n\n" +
+            error.message,
+            "ai",
+            true
+        );
+
+    } finally {
+
+        busy = false;
+        sendButton.disabled = false;
+        questionBox.focus();
+    }
 }
 
-function removeTyping(){
-const t=document.getElementById("typing");
-if(t)t.remove();
-}
+sendButton.addEventListener("click", sendQuestion);
 
-async function ask(text=null){
-const value=(text!==null?text:question.value).trim();
+questionBox.addEventListener("keydown", function(event) {
 
-if(!value && !selectedFile)return;
+    if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendQuestion();
+    }
 
-if(value)addMessage(value,"user");
-
-question.value="";
-question.style.height="48px";
-sendBtn.disabled=true;
-addTyping();
-
-try{
-let response;
-
-if(selectedFile){
-const form=new FormData();
-form.append("file",selectedFile);
-form.append("question",value);
-
-response=await fetch("/ask",{
-method:"POST",
-body:form
 });
-}else{
-response=await fetch("/ask",{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({question:value})
-});
-}
 
-let data={};
+questionBox.addEventListener("input", function() {
 
-try{
-data=await response.json();
-}catch(e){
-throw new Error("The server returned an invalid response.");
-}
+    this.style.height = "48px";
 
-removeTyping();
+    this.style.height =
+        Math.min(this.scrollHeight, 150) + "px";
 
-if(!response.ok){
-throw new Error(data.error||data.message||"The AI server returned an error.");
-}
-
-const answer=data.answer||data.response||data.text||"I couldn't generate an answer.";
-
-addMessage(answer,"assistant");
-speak(answer);
-
-}catch(error){
-removeTyping();
-addMessage("Sorry, I couldn't connect to BHARAT AI.\n\n"+error.message,"assistant",true);
-status.textContent="● Server error";
-status.style.background="#fff1f1";
-status.style.color="#a11";
-}finally{
-sendBtn.disabled=false;
-}
-}
-
-function quickAsk(text){
-question.value=text;
-ask();
-}
-
-sendBtn.addEventListener("click",()=>ask());
-
-question.addEventListener("keydown",e=>{
-if(e.key==="Enter"&&!e.shiftKey){
-e.preventDefault();
-ask();
-}
 });
 
-question.addEventListener("input",()=>{
-question.style.height="48px";
-question.style.height=Math.min(question.scrollHeight,150)+"px";
+fileInput.addEventListener("change", async function() {
+
+    const file = this.files[0];
+
+    if (!file) {
+        return;
+    }
+
+    fileName.textContent = file.name;
+    fileRow.style.display = "flex";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+
+        fileName.textContent =
+            file.name + " — uploading...";
+
+        const response = await fetch("/upload", {
+            method: "POST",
+            body: formData
+        });
+
+        const contentType =
+            response.headers.get("content-type") || "";
+
+        const rawText = await response.text();
+
+        let data = null;
+
+        if (contentType.includes("application/json")) {
+            try {
+                data = JSON.parse(rawText);
+            } catch (e) {
+                data = null;
+            }
+        }
+
+        if (!response.ok) {
+
+            addMessage(
+                "Upload error:\n\n" +
+                (data?.message || rawText),
+                "ai",
+                true
+            );
+
+            return;
+        }
+
+        fileName.textContent =
+            data?.message ||
+            file.name + " uploaded successfully.";
+
+    } catch (error) {
+
+        addMessage(
+            "Could not upload the file.\n\n" +
+            error.message,
+            "ai",
+            true
+        );
+    }
+
 });
 
-fileBtn.addEventListener("click",()=>fileInput.click());
+clearButton.addEventListener("click", async function() {
 
-fileInput.addEventListener("change",()=>{
-selectedFile=fileInput.files[0]||null;
+    try {
 
-if(selectedFile){
-fileInfo.textContent="📎 "+selectedFile.name;
-fileInfo.classList.add("active");
-}else{
-fileInfo.textContent="";
-fileInfo.classList.remove("active");
-}
+        const response = await fetch("/clear", {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        const rawText = await response.text();
+
+        let data = null;
+
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+        }
+
+        fileInput.value = "";
+        fileRow.style.display = "none";
+        fileName.textContent = "";
+
+        addMessage(
+            data?.message ||
+            "Study material cleared.",
+            "ai"
+        );
+
+    } catch (error) {
+
+        addMessage(
+            "Could not clear the study material.\n\n" +
+            error.message,
+            "ai",
+            true
+        );
+    }
+
 });
 
-function speak(text){
-if(!("speechSynthesis" in window))return;
+const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
 
-speechSynthesis.cancel();
+if (SpeechRecognition) {
 
-const utterance=new SpeechSynthesisUtterance(text);
-utterance.rate=.95;
-utterance.pitch=1;
-utterance.volume=1;
+    const recognition = new SpeechRecognition();
 
-const voices=speechSynthesis.getVoices();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-IN";
 
-const preferred=voices.find(v=>
-/en-IN|hi-IN/i.test(v.lang)
-)||voices.find(v=>
-/Google|Microsoft/i.test(v.name)
-);
+    micButton.addEventListener("click", function() {
 
-if(preferred)utterance.voice=preferred;
+        try {
+            recognition.start();
+            micButton.textContent = "🔴";
+        } catch (error) {
+        }
 
-speechSynthesis.speak(utterance);
+    });
+
+    recognition.onresult = function(event) {
+
+        const transcript =
+            event.results[0][0].transcript;
+
+        questionBox.value =
+            questionBox.value
+                ? questionBox.value + " " + transcript
+                : transcript;
+
+        questionBox.dispatchEvent(
+            new Event("input")
+        );
+
+    };
+
+    recognition.onend = function() {
+        micButton.textContent = "🎙";
+    };
+
+    recognition.onerror = function() {
+        micButton.textContent = "🎙";
+    };
+
+} else {
+
+    micButton.style.display = "none";
 }
 
-function startVoice(){
-const SpeechRecognition=
-window.SpeechRecognition||
-window.webkitSpeechRecognition;
-
-if(!SpeechRecognition){
-alert("Voice input is not supported by this browser. Try a recent Chrome or Edge browser.");
-return;
-}
-
-if(recognition){
-recognition.stop();
-recognition=null;
-micBtn.textContent="🎙";
-return;
-}
-
-recognition=new SpeechRecognition();
-recognition.lang="en-IN";
-recognition.interimResults=false;
-recognition.continuous=false;
-
-recognition.onstart=()=>{
-micBtn.textContent="🔴";
-status.textContent="● Listening";
-};
-
-recognition.onresult=e=>{
-const transcript=e.results[0][0].transcript;
-question.value+=(question.value?" ":"")+transcript;
-question.dispatchEvent(new Event("input"));
-};
-
-recognition.onerror=()=>{
-status.textContent="● Online";
-micBtn.textContent="🎙";
-};
-
-recognition.onend=()=>{
-recognition=null;
-micBtn.textContent="🎙";
-status.textContent="● Online";
-};
-
-recognition.start();
-}
-
-micBtn.addEventListener("click",startVoice);
-
-window.addEventListener("load",()=>{
-setTimeout(()=>{
-if("speechSynthesis" in window)speechSynthesis.getVoices();
-},300);
-});
-
-async function checkServer(){
-try{
-const r=await fetch("/health",{method:"GET"});
-if(r.ok){
-status.textContent="● Online";
-status.style.background="#edf7ed";
-status.style.color="#267326";
-}else{
-status.textContent="● Server issue";
-}
-}catch(e){
-status.textContent="● Connecting";
-}
-}
-
-checkServer();
-setInterval(checkServer,30000);
+fetch("/health")
+    .then(response => response.json())
+    .then(data => {
+        console.log("BHARAT AI health:", data);
+    })
+    .catch(error => {
+        console.log("Health check failed:", error);
+    });
 </script>
 
 </body>
