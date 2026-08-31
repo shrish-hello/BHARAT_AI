@@ -1,4 +1,4 @@
-rom flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 import os
 import json
 import urllib.request
