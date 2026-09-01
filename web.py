@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context, session
+from flask import Flask, request, jsonify, send_from_directory, session, Response, stream_with_context
 from google import genai
 from werkzeug.utils import secure_filename
 import os
@@ -23,7 +23,9 @@ app.secret_key = os.environ.get(
 API_KEY = os.environ.get("GEMINI_API_KEY")
 
 if not API_KEY:
-    raise RuntimeError("GEMINI_API_KEY is not set in Render Environment Variables.")
+    raise RuntimeError(
+        "GEMINI_API_KEY is not set in Render Environment Variables."
+    )
 
 client = genai.Client(api_key=API_KEY)
 
@@ -112,9 +114,13 @@ def reset_daily_questions(student):
 
 
 def get_status(student):
-    created_at = datetime.fromisoformat(student["created_at"])
+    created_at = datetime.fromisoformat(
+        student["created_at"]
+    )
 
-    trial_end = created_at + timedelta(days=TRIAL_DAYS)
+    trial_end = created_at + timedelta(
+        days=TRIAL_DAYS
+    )
 
     now = datetime.utcnow()
 
@@ -174,7 +180,10 @@ Student question:
 {question}
 """
 
-    uploaded_text = session.get("uploaded_text", "")
+    uploaded_text = session.get(
+        "uploaded_text",
+        ""
+    )
 
     if uploaded_text:
         prompt += f"""
@@ -196,55 +205,45 @@ you may answer using your general knowledge.
     return prompt
 
 
-def is_retryable_error(error):
-    error_text = str(error).lower()
-
-    return any(
-        phrase in error_text
-        for phrase in [
-            "429",
-            "500",
-            "502",
-            "503",
-            "504",
-            "unavailable",
-            "overloaded",
-            "rate limit",
-            "resource exhausted",
-            "temporarily unavailable",
-            "internal server error",
-            "timeout",
-            "deadline exceeded",
-            "connection reset",
-            "service unavailable"
-        ]
-    )
-
-
 def get_model_stream(prompt):
     last_error = None
 
     for model in MODELS:
 
-        for attempt in range(2):
+        try:
+            stream = client.models.generate_content_stream(
+                model=model,
+                contents=prompt
+            )
 
-            try:
-                stream = client.models.generate_content_stream(
-                    model=model,
-                    contents=prompt
-                )
+            return model, stream
 
-                return model, stream
+        except Exception as error:
 
-            except Exception as error:
+            last_error = error
 
-                last_error = error
+            error_text = str(error).lower()
 
-                if is_retryable_error(error) and attempt == 0:
-                    time.sleep(0.5)
-                    continue
+            retryable = any(
+                phrase in error_text
+                for phrase in [
+                    "429",
+                    "500",
+                    "503",
+                    "unavailable",
+                    "overloaded",
+                    "rate limit",
+                    "resource exhausted",
+                    "temporarily unavailable",
+                    "internal server error",
+                    "timeout",
+                    "deadline exceeded"
+                ]
+            )
 
-                break
+            if retryable:
+                time.sleep(0.5)
+                continue
 
     raise Exception(
         str(last_error)
@@ -261,6 +260,7 @@ def generate_normal_answer(prompt):
         for attempt in range(2):
 
             try:
+
                 response = client.models.generate_content(
                     model=model,
                     contents=prompt
@@ -279,7 +279,26 @@ def generate_normal_answer(prompt):
 
                 last_error = error
 
-                if is_retryable_error(error) and attempt == 0:
+                error_text = str(error).lower()
+
+                retryable = any(
+                    phrase in error_text
+                    for phrase in [
+                        "429",
+                        "500",
+                        "503",
+                        "unavailable",
+                        "overloaded",
+                        "rate limit",
+                        "resource exhausted",
+                        "temporarily unavailable",
+                        "internal server error",
+                        "timeout",
+                        "deadline exceeded"
+                    ]
+                )
+
+                if retryable and attempt == 0:
                     time.sleep(0.5)
                     continue
 
@@ -354,14 +373,6 @@ def home():
     )
 
 
-@app.route("/robots.txt")
-def robots():
-    return Response(
-        "User-agent: *\nAllow: /\n",
-        mimetype="text/plain"
-    )
-
-
 @app.route("/health")
 def health():
     return jsonify({
@@ -375,7 +386,9 @@ def register():
 
     try:
 
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(
+            silent=True
+        ) or {}
 
         name = str(
             data.get("name", "")
@@ -394,7 +407,8 @@ def register():
         )
 
         guardian_confirmed = (
-            data.get("guardian_confirmed") is True
+            data.get("guardian_confirmed")
+            is True
         )
 
         if not name:
@@ -424,7 +438,7 @@ def register():
         if not guardian_confirmed:
             return jsonify({
                 "success": False,
-                "message": "Please have a parent or guardian review and approve this student account."
+                "message": "A parent or guardian must approve this student account."
             }), 400
 
         db = get_db()
@@ -520,7 +534,9 @@ def login():
 
     try:
 
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(
+            silent=True
+        ) or {}
 
         email = str(
             data.get("email", "")
@@ -650,7 +666,9 @@ def ask():
 
     try:
 
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(
+            silent=True
+        ) or {}
 
         question = str(
             data.get("question", "")
@@ -687,7 +705,9 @@ def ask():
             question
         )
 
-        answer = generate_normal_answer(prompt)
+        answer = generate_normal_answer(
+            prompt
+        )
 
         db = get_db()
 
@@ -732,6 +752,7 @@ def ask_stream():
     student = get_student()
 
     if not student:
+
         return jsonify({
             "success": False,
             "answer": "Please log in before asking BHARAT AI a question."
@@ -739,13 +760,16 @@ def ask_stream():
 
     try:
 
-        data = request.get_json(silent=True) or {}
+        data = request.get_json(
+            silent=True
+        ) or {}
 
         question = str(
             data.get("question", "")
         ).strip()
 
         if not question:
+
             return jsonify({
                 "success": False,
                 "answer": "Please ask me a question."
@@ -757,6 +781,7 @@ def ask_stream():
             status["membership"] == "expired"
             and not student["lifetime"]
         ):
+
             return jsonify({
                 "success": False,
                 "answer": "Your 7-day free trial has ended."
@@ -766,6 +791,7 @@ def ask_stream():
             status["daily_remaining"] <= 0
             and not student["lifetime"]
         ):
+
             return jsonify({
                 "success": False,
                 "answer": f"You have reached today's limit of {DAILY_LIMIT} questions. Please try again tomorrow."
@@ -783,6 +809,7 @@ def ask_stream():
             "answer": str(error)
         }), 500
 
+
     @stream_with_context
     def generate():
 
@@ -790,7 +817,9 @@ def ask_stream():
 
         try:
 
-            model, stream = get_model_stream(prompt)
+            model, stream = get_model_stream(
+                prompt
+            )
 
             yield "data: " + json.dumps({
                 "type": "start",
@@ -868,6 +897,7 @@ def upload():
     student = get_student()
 
     if not student:
+
         return jsonify({
             "success": False,
             "message": "Please log in first."
@@ -876,6 +906,7 @@ def upload():
     try:
 
         if "file" not in request.files:
+
             return jsonify({
                 "success": False,
                 "message": "No file selected."
@@ -884,14 +915,18 @@ def upload():
         file = request.files["file"]
 
         if not file.filename:
+
             return jsonify({
                 "success": False,
                 "message": "No file selected."
             }), 400
 
-        filename = secure_filename(file.filename)
+        filename = secure_filename(
+            file.filename
+        )
 
         if not filename:
+
             return jsonify({
                 "success": False,
                 "message": "Invalid file name."
@@ -900,6 +935,7 @@ def upload():
         if not filename.lower().endswith(
             (".txt", ".pdf", ".docx")
         ):
+
             return jsonify({
                 "success": False,
                 "message": "Only TXT, PDF and DOCX files are supported."
@@ -915,6 +951,7 @@ def upload():
         text = read_file(path)
 
         if not text:
+
             return jsonify({
                 "success": False,
                 "message": "The file was uploaded, but I couldn't read its text."
