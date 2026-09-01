@@ -1,7 +1,7 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<meta name="google-site-verification" content="N8cCJkOJIa-aNtdPSnUqHA15_-2lRzqHizQceGnPVFM" /><>
+<head>
+<meta name="google-site-verification" content="N8cCJkOJIa-aNtdPSnUqHA15_-2lRzqHizQceGnPVFM">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BHARAT AI — Study Tutor</title>
@@ -220,16 +220,40 @@ button {
     background: transparent;
 }
 
-.send-btn {
+.send-btn,
+.mic-btn {
     width: 45px;
     height: 45px;
     border-radius: 50%;
     background: #111;
     color: white;
     font-size: 18px;
+    flex-shrink: 0;
 }
 
-.send-btn:disabled {
+.mic-btn {
+    margin-right: 6px;
+}
+
+.mic-btn.listening {
+    background: #d93025;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.08);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.send-btn:disabled,
+.mic-btn:disabled {
     opacity: .45;
     cursor: not-allowed;
 }
@@ -400,15 +424,6 @@ button {
     font-size: 14px;
 }
 
-.trial-card {
-    background: #f5f5f5;
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 15px;
-    font-size: 13px;
-    color: #555;
-}
-
 .hidden {
     display: none !important;
 }
@@ -466,6 +481,25 @@ button {
     .welcome h1 {
         font-size: 30px;
     }
+
+    .composer {
+        padding: 7px;
+    }
+
+    .composer input {
+        min-width: 0;
+        padding: 12px 8px;
+    }
+
+    .plus-btn {
+        width: 38px;
+    }
+
+    .mic-btn,
+    .send-btn {
+        width: 42px;
+        height: 42px;
+    }
 }
 </style>
 </head>
@@ -502,7 +536,6 @@ button {
 
 </header>
 
-
 <div id="app">
 
     <main class="chat" id="chat">
@@ -517,7 +550,6 @@ button {
     </main>
 
 </div>
-
 
 <div class="composer-area">
 
@@ -537,6 +569,15 @@ button {
             autocomplete="off"
             disabled
         >
+
+        <button
+            class="mic-btn"
+            id="micButton"
+            onclick="toggleMic()"
+            disabled
+            title="Speak your question">
+            🎤
+        </button>
 
         <button
             class="send-btn"
@@ -562,9 +603,6 @@ button {
 
 </div>
 
-
-<!-- AUTH MODAL -->
-
 <div class="modal-bg" id="authModal">
 
     <div class="modal">
@@ -573,6 +611,7 @@ button {
 
             <div>
                 <h2 id="modalTitle">Create your account</h2>
+
                 <p class="description" id="modalDescription">
                     Create a student account and start your 7-day free trial.
                 </p>
@@ -583,7 +622,6 @@ button {
             </button>
 
         </div>
-
 
         <div class="tabs">
 
@@ -603,11 +641,7 @@ button {
 
         </div>
 
-
         <div id="authMessage"></div>
-
-
-        <!-- LOGIN -->
 
         <form id="loginForm" onsubmit="login(event)">
 
@@ -623,7 +657,6 @@ button {
                 >
             </div>
 
-
             <div class="form-group">
                 <label>Password</label>
 
@@ -636,7 +669,6 @@ button {
                 >
             </div>
 
-
             <button
                 type="submit"
                 class="main-action"
@@ -645,9 +677,6 @@ button {
             </button>
 
         </form>
-
-
-        <!-- REGISTER -->
 
         <form
             id="registerForm"
@@ -670,7 +699,6 @@ button {
 
             </div>
 
-
             <div class="form-group">
 
                 <label>
@@ -687,7 +715,6 @@ button {
 
             </div>
 
-
             <div class="form-group">
 
                 <label>
@@ -700,58 +727,22 @@ button {
                         Select grade
                     </option>
 
-                    <option value="Class 1">
-                        Class 1
-                    </option>
-
-                    <option value="Class 2">
-                        Class 2
-                    </option>
-
-                    <option value="Class 3">
-                        Class 3
-                    </option>
-
-                    <option value="Class 4">
-                        Class 4
-                    </option>
-
-                    <option value="Class 5">
-                        Class 5
-                    </option>
-
-                    <option value="Class 6">
-                        Class 6
-                    </option>
-
-                    <option value="Class 7">
-                        Class 7
-                    </option>
-
-                    <option value="Class 8">
-                        Class 8
-                    </option>
-
-                    <option value="Class 9">
-                        Class 9
-                    </option>
-
-                    <option value="Class 10">
-                        Class 10
-                    </option>
-
-                    <option value="Class 11">
-                        Class 11
-                    </option>
-
-                    <option value="Class 12">
-                        Class 12
-                    </option>
+                    <option value="Class 1">Class 1</option>
+                    <option value="Class 2">Class 2</option>
+                    <option value="Class 3">Class 3</option>
+                    <option value="Class 4">Class 4</option>
+                    <option value="Class 5">Class 5</option>
+                    <option value="Class 6">Class 6</option>
+                    <option value="Class 7">Class 7</option>
+                    <option value="Class 8">Class 8</option>
+                    <option value="Class 9">Class 9</option>
+                    <option value="Class 10">Class 10</option>
+                    <option value="Class 11">Class 11</option>
+                    <option value="Class 12">Class 12</option>
 
                 </select>
 
             </div>
-
 
             <div class="form-group">
 
@@ -770,7 +761,6 @@ button {
 
             </div>
 
-
             <div class="guardian-box">
 
                 <input
@@ -787,7 +777,6 @@ button {
 
             </div>
 
-
             <button
                 type="submit"
                 class="main-action"
@@ -795,13 +784,11 @@ button {
                 Create Account & Start Trial
             </button>
 
-
             <div class="small-note">
                 Your free trial lasts 7 days and has a daily question limit.
             </div>
 
         </form>
-
 
         <div class="membership-card">
 
@@ -828,19 +815,14 @@ button {
 
 </div>
 
-
 <script>
 
 let currentUser = null;
 let accountStatus = null;
-
-
-/* ---------------------------------------------
-   AUTH MODAL
---------------------------------------------- */
+let recognition = null;
+let isListening = false;
 
 function openAuth(mode = "login") {
-
     document
         .getElementById("authModal")
         .classList
@@ -849,9 +831,7 @@ function openAuth(mode = "login") {
     switchAuth(mode);
 }
 
-
 function closeAuth() {
-
     document
         .getElementById("authModal")
         .classList
@@ -861,7 +841,6 @@ function closeAuth() {
         .getElementById("authMessage")
         .innerHTML = "";
 }
-
 
 function switchAuth(mode) {
 
@@ -912,14 +891,8 @@ function switchAuth(mode) {
 
         description.textContent =
             "Create a student account and start your 7-day free trial.";
-
     }
 }
-
-
-/* ---------------------------------------------
-   MESSAGE HELPERS
---------------------------------------------- */
 
 function showAuthError(message) {
 
@@ -927,13 +900,11 @@ function showAuthError(message) {
         `<div class="error">${escapeHtml(message)}</div>`;
 }
 
-
 function showAuthSuccess(message) {
 
     document.getElementById("authMessage").innerHTML =
         `<div class="success">${escapeHtml(message)}</div>`;
 }
-
 
 function escapeHtml(text) {
 
@@ -943,11 +914,6 @@ function escapeHtml(text) {
 
     return div.innerHTML;
 }
-
-
-/* ---------------------------------------------
-   REGISTER
---------------------------------------------- */
 
 async function register(event) {
 
@@ -965,19 +931,8 @@ async function register(event) {
     const password =
         document.getElementById("registerPassword").value;
 
-    const guardianCheckbox =
-        document.getElementById("guardianConfirmed");
-
-
-    /*
-       IMPORTANT:
-       This sends the exact field expected by web.py:
-       guardian_confirmed
-    */
-
     const guardianConfirmed =
-        guardianCheckbox.checked;
-
+        document.getElementById("guardianConfirmed").checked;
 
     if (!guardianConfirmed) {
 
@@ -985,19 +940,14 @@ async function register(event) {
             "A parent or guardian must approve this student account."
         );
 
-        guardianCheckbox.focus();
-
         return;
     }
-
 
     const button =
         document.getElementById("registerButton");
 
     button.disabled = true;
-
     button.textContent = "Creating account...";
-
 
     try {
 
@@ -1013,35 +963,16 @@ async function register(event) {
                 body: JSON.stringify({
 
                     name: name,
-
                     email: email,
-
                     grade: grade,
-
                     password: password,
-
-                    guardian_confirmed:
-                        guardianConfirmed
+                    guardian_confirmed: guardianConfirmed
 
                 })
 
             });
 
-
-        let data;
-
-        try {
-
-            data = await response.json();
-
-        } catch {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
-
+        const data = await response.json();
 
         if (!response.ok || !data.success) {
 
@@ -1050,9 +981,7 @@ async function register(event) {
                 data.answer ||
                 "Unable to create the account."
             );
-
         }
-
 
         currentUser = data.user;
 
@@ -1064,11 +993,9 @@ async function register(event) {
             daily_remaining: data.daily_limit
         };
 
-
         showAuthSuccess(
             "Account created successfully. Your 7-day free trial has started."
         );
-
 
         setTimeout(() => {
 
@@ -1081,7 +1008,6 @@ async function register(event) {
             );
 
         }, 700);
-
 
     } catch (error) {
 
@@ -1096,20 +1022,12 @@ async function register(event) {
 
         button.textContent =
             "Create Account & Start Trial";
-
     }
-
 }
-
-
-/* ---------------------------------------------
-   LOGIN
---------------------------------------------- */
 
 async function login(event) {
 
     event.preventDefault();
-
 
     const email =
         document.getElementById("loginEmail").value.trim();
@@ -1117,14 +1035,11 @@ async function login(event) {
     const password =
         document.getElementById("loginPassword").value;
 
-
     const button =
         document.getElementById("loginButton");
 
     button.disabled = true;
-
     button.textContent = "Logging in...";
-
 
     try {
 
@@ -1138,30 +1053,13 @@ async function login(event) {
                 },
 
                 body: JSON.stringify({
-
                     email: email,
-
                     password: password
-
                 })
 
             });
 
-
-        let data;
-
-        try {
-
-            data = await response.json();
-
-        } catch {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
-
+        const data = await response.json();
 
         if (!response.ok || !data.success) {
 
@@ -1169,24 +1067,17 @@ async function login(event) {
                 data.message ||
                 "Incorrect email or password."
             );
-
         }
 
-
         currentUser = data.user;
-
         accountStatus = data.status;
 
-
         closeAuth();
-
         updateUI();
-
 
         addBotMessage(
             `Welcome back, ${currentUser.name}! How can I help you study today?`
         );
-
 
     } catch (error) {
 
@@ -1198,17 +1089,9 @@ async function login(event) {
     } finally {
 
         button.disabled = false;
-
         button.textContent = "Login";
-
     }
-
 }
-
-
-/* ---------------------------------------------
-   CHECK SESSION
---------------------------------------------- */
 
 async function checkSession() {
 
@@ -1218,39 +1101,26 @@ async function checkSession() {
             await fetch("/me");
 
         if (!response.ok) {
-
             updateUI();
-
             return;
         }
-
 
         const data =
             await response.json();
 
-
         if (data.success && data.logged_in) {
 
             currentUser = data.user;
-
             accountStatus = data.status;
 
             updateUI();
-
         }
 
     } catch {
 
         updateUI();
-
     }
-
 }
-
-
-/* ---------------------------------------------
-   UPDATE UI
---------------------------------------------- */
 
 function updateUI() {
 
@@ -1266,93 +1136,82 @@ function updateUI() {
     const sendButton =
         document.getElementById("sendButton");
 
+    const micButton =
+        document.getElementById("micButton");
+
     const headerUserName =
         document.getElementById("headerUserName");
 
     const statusLine =
         document.getElementById("statusLine");
 
-
     if (currentUser) {
 
         loggedOutButtons.style.display = "none";
-
         loggedInArea.style.display = "flex";
 
         headerUserName.textContent =
             currentUser.name;
 
         questionInput.disabled = false;
-
         sendButton.disabled = false;
+        micButton.disabled = false;
 
         questionInput.placeholder =
             "Ask BHARAT AI anything...";
-
 
         if (accountStatus) {
 
             let statusText = "";
 
-
             if (
-                accountStatus.membership ===
-                "lifetime"
+                accountStatus.membership === "lifetime"
             ) {
 
                 statusText =
                     `Lifetime membership • ${accountStatus.daily_remaining ?? 0} questions remaining today`;
 
             } else if (
-                accountStatus.membership ===
-                "expired"
+                accountStatus.membership === "expired"
             ) {
 
                 statusText =
                     "Your 7-day free trial has ended.";
 
                 questionInput.disabled = true;
-
                 sendButton.disabled = true;
+                micButton.disabled = true;
 
             } else {
 
                 statusText =
                     `${accountStatus.trial_days_remaining ?? 0} trial days remaining • ${accountStatus.daily_remaining ?? 0} questions remaining today`;
-
             }
 
             statusLine.textContent =
                 statusText;
-
         }
 
     } else {
 
         loggedOutButtons.style.display = "flex";
-
         loggedInArea.style.display = "none";
 
         questionInput.disabled = true;
-
         sendButton.disabled = true;
+        micButton.disabled = true;
 
         questionInput.placeholder =
             "Login to ask BHARAT AI...";
 
         statusLine.textContent =
             "Login to ask BHARAT AI. BHARAT AI can make mistakes. Check important answers.";
-
     }
-
 }
 
-
-/* ---------------------------------------------
-   LOGOUT
---------------------------------------------- */
-
 async function logout() {
+
+    stopMic();
 
     try {
 
@@ -1366,7 +1225,6 @@ async function logout() {
     } catch {}
 
     currentUser = null;
-
     accountStatus = null;
 
     updateUI();
@@ -1374,23 +1232,15 @@ async function logout() {
     addBotMessage(
         "You have been logged out. Login again to continue using BHARAT AI."
     );
-
 }
-
-
-/* ---------------------------------------------
-   ASK QUESTION
---------------------------------------------- */
 
 async function askQuestion() {
 
     if (!currentUser) {
 
         openAuth("login");
-
         return;
     }
-
 
     const input =
         document.getElementById("questionInput");
@@ -1398,24 +1248,22 @@ async function askQuestion() {
     const question =
         input.value.trim();
 
-
     if (!question) {
         return;
     }
 
+    stopMic();
 
     input.value = "";
-
     input.disabled = true;
 
     document.getElementById("sendButton").disabled = true;
-
+    document.getElementById("micButton").disabled = true;
 
     addUserMessage(question);
 
     const loading =
         addBotMessage("Thinking...");
-
 
     try {
 
@@ -1429,31 +1277,15 @@ async function askQuestion() {
                 },
 
                 body: JSON.stringify({
-
                     question: question
-
                 })
 
             });
 
-
-        let data;
-
-        try {
-
-            data = await response.json();
-
-        } catch {
-
-            throw new Error(
-                "The server returned an invalid response."
-            );
-
-        }
-
+        const data =
+            await response.json();
 
         loading.remove();
-
 
         if (!response.ok || !data.success) {
 
@@ -1469,14 +1301,11 @@ async function askQuestion() {
                 data.answer ||
                 "I couldn't generate an answer."
             );
-
         }
-
 
         await refreshAccountStatus();
 
-
-    } catch (error) {
+    } catch {
 
         loading.remove();
 
@@ -1491,16 +1320,12 @@ async function askQuestion() {
         document.getElementById("sendButton").disabled =
             false;
 
+        document.getElementById("micButton").disabled =
+            false;
+
         input.focus();
-
     }
-
 }
-
-
-/* ---------------------------------------------
-   ENTER KEY
---------------------------------------------- */
 
 document
     .getElementById("questionInput")
@@ -1516,16 +1341,9 @@ document
                 event.preventDefault();
 
                 askQuestion();
-
             }
-
         }
     );
-
-
-/* ---------------------------------------------
-   CHAT MESSAGES
---------------------------------------------- */
 
 function addUserMessage(text) {
 
@@ -1539,19 +1357,16 @@ function addUserMessage(text) {
         welcome.remove();
     }
 
-
     const message =
         document.createElement("div");
 
     message.className =
         "message user";
 
-
     message.innerHTML = `
         <div class="bubble">${escapeHtml(text)}</div>
         <div class="avatar">You</div>
     `;
-
 
     chat.appendChild(message);
 
@@ -1559,9 +1374,7 @@ function addUserMessage(text) {
         top: document.body.scrollHeight,
         behavior: "smooth"
     });
-
 }
-
 
 function addBotMessage(text) {
 
@@ -1575,19 +1388,16 @@ function addBotMessage(text) {
         welcome.remove();
     }
 
-
     const message =
         document.createElement("div");
 
     message.className =
         "message bot";
 
-
     message.innerHTML = `
         <div class="avatar">B</div>
         <div class="bubble">${escapeHtml(text)}</div>
     `;
-
 
     chat.appendChild(message);
 
@@ -1596,15 +1406,8 @@ function addBotMessage(text) {
         behavior: "smooth"
     });
 
-
     return message;
-
 }
-
-
-/* ---------------------------------------------
-   REFRESH ACCOUNT STATUS
---------------------------------------------- */
 
 async function refreshAccountStatus() {
 
@@ -1612,21 +1415,17 @@ async function refreshAccountStatus() {
         return;
     }
 
-
     try {
 
         const response =
             await fetch("/account/status");
 
-
         if (!response.ok) {
             return;
         }
 
-
         const data =
             await response.json();
-
 
         if (data.success) {
 
@@ -1634,27 +1433,18 @@ async function refreshAccountStatus() {
                 data.status;
 
             updateUI();
-
         }
 
     } catch {}
-
 }
-
-
-/* ---------------------------------------------
-   FILE UPLOAD
---------------------------------------------- */
 
 async function uploadFile() {
 
     if (!currentUser) {
 
         openAuth("login");
-
         return;
     }
-
 
     const fileInput =
         document.getElementById("fileInput");
@@ -1662,11 +1452,9 @@ async function uploadFile() {
     const file =
         fileInput.files[0];
 
-
     if (!file) {
         return;
     }
-
 
     const formData =
         new FormData();
@@ -1676,11 +1464,9 @@ async function uploadFile() {
         file
     );
 
-
     addBotMessage(
         `Uploading ${file.name}...`
     );
-
 
     try {
 
@@ -1693,16 +1479,13 @@ async function uploadFile() {
                 }
             );
 
-
         const data =
             await response.json();
-
 
         addBotMessage(
             data.message ||
             "File upload completed."
         );
-
 
     } catch {
 
@@ -1713,16 +1496,175 @@ async function uploadFile() {
     } finally {
 
         fileInput.value = "";
-
     }
-
 }
 
+function setupSpeechRecognition() {
 
-/* ---------------------------------------------
-   START
---------------------------------------------- */
+    const SpeechRecognition =
+        window.SpeechRecognition ||
+        window.webkitSpeechRecognition;
 
+    if (!SpeechRecognition) {
+
+        document.getElementById("micButton").title =
+            "Voice input is not supported in this browser.";
+
+        return;
+    }
+
+    recognition =
+        new SpeechRecognition();
+
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = "en-IN";
+
+    recognition.onstart = function() {
+
+        isListening = true;
+
+        const micButton =
+            document.getElementById("micButton");
+
+        micButton.classList.add("listening");
+        micButton.textContent = "⏹";
+
+        document.getElementById("statusLine").textContent =
+            "Listening... Speak your question.";
+    };
+
+    recognition.onresult = function(event) {
+
+        let finalText = "";
+        let interimText = "";
+
+        for (
+            let i = event.resultIndex;
+            i < event.results.length;
+            i++
+        ) {
+
+            const text =
+                event.results[i][0].transcript;
+
+            if (event.results[i].isFinal) {
+                finalText += text;
+            } else {
+                interimText += text;
+            }
+        }
+
+        const input =
+            document.getElementById("questionInput");
+
+        if (finalText) {
+
+            input.value =
+                (input.value + " " + finalText).trim();
+
+        } else if (interimText) {
+
+            input.placeholder =
+                interimText;
+        }
+    };
+
+    recognition.onerror = function(event) {
+
+        if (event.error === "not-allowed") {
+
+            addBotMessage(
+                "Microphone permission was blocked. Please allow microphone access in your browser."
+            );
+
+        } else if (event.error !== "aborted") {
+
+            addBotMessage(
+                "I couldn't hear that. Please try again."
+            );
+        }
+
+        stopMic();
+    };
+
+    recognition.onend = function() {
+
+        isListening = false;
+
+        const micButton =
+            document.getElementById("micButton");
+
+        micButton.classList.remove("listening");
+        micButton.textContent = "🎤";
+
+        document.getElementById("questionInput").placeholder =
+            currentUser
+                ? "Ask BHARAT AI anything..."
+                : "Login to ask BHARAT AI...";
+
+        if (currentUser) {
+            document.getElementById("statusLine").textContent =
+                accountStatus
+                    ? `${accountStatus.trial_days_remaining ?? 0} trial days remaining • ${accountStatus.daily_remaining ?? 0} questions remaining today`
+                    : "Ready";
+        }
+    };
+}
+
+function toggleMic() {
+
+    if (!currentUser) {
+
+        openAuth("login");
+        return;
+    }
+
+    if (!recognition) {
+
+        addBotMessage(
+            "Voice input is not supported in this browser. Try a browser with speech recognition support."
+        );
+
+        return;
+    }
+
+    if (isListening) {
+
+        stopMic();
+
+    } else {
+
+        try {
+
+            recognition.start();
+
+        } catch {}
+    }
+}
+
+function stopMic() {
+
+    if (recognition && isListening) {
+
+        try {
+            recognition.stop();
+        } catch {}
+    }
+
+    isListening = false;
+
+    const micButton =
+        document.getElementById("micButton");
+
+    if (micButton) {
+
+        micButton.classList.remove("listening");
+        micButton.textContent = "🎤";
+    }
+}
+
+setupSpeechRecognition();
 checkSession();
 
 </script>
