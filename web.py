@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, send_from_directory, session
+from flask import Flask, request, jsonify, send_from_directory, session, Response, stream_with_context
 from google import genai
 from werkzeug.utils import secure_filename
 import os
 import sqlite3
 from datetime import datetime, timedelta
 import time
+import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
@@ -92,7 +93,6 @@ def reset_daily_questions(student):
     today = datetime.utcnow().date().isoformat()
 
     if student["last_question_date"] != today:
-
         db = get_db()
 
         db.execute(
@@ -124,12 +124,12 @@ def get_status(student):
 
     now = datetime.utcnow()
 
+    trial_active = now < trial_end
+
     trial_days_remaining = max(
         0,
         (trial_end.date() - now.date()).days
     )
-
-    trial_active = now < trial_end
 
     questions_today = reset_daily_questions(student)
 
@@ -153,12 +153,111 @@ def get_status(student):
     }
 
 
-def generate_answer(prompt):
+def build_prompt(student, question):
+    prompt = f"""
+You are BHARAT AI, a fast, friendly and intelligent AI tutor for students.
+
+Student name:
+{student["name"]}
+
+Student class:
+{student["grade"]}
+
+Rules:
+- Answer quickly and clearly.
+- Use simple language suitable for the student's class.
+- Explain concepts instead of only giving the final answer.
+- Use step-by-step explanations when useful.
+- Support English, Hindi and Hinglish.
+- Be accurate and honest.
+- Do not invent information.
+- If you are unsure, say so clearly.
+- Keep answers appropriate for students.
+- Avoid unnecessary repetition.
+
+Student question:
+
+{question}
+"""
+
+    uploaded_text = session.get(
+        "uploaded_text",
+        ""
+    )
+
+    if uploaded_text:
+        prompt += f"""
+
+The student has uploaded study material.
+
+Use this material when it is relevant.
+
+--- STUDY MATERIAL ---
+
+{uploaded_text[:50000]}
+
+--- END STUDY MATERIAL ---
+
+If the answer is not in the uploaded material,
+you may answer using your general knowledge.
+"""
+
+    return prompt
+
+
+def get_model_stream(prompt):
     last_error = None
 
     for model in MODELS:
 
-        for attempt in range(3):
+        try:
+            stream = client.models.generate_content_stream(
+                model=model,
+                contents=prompt
+            )
+
+            return model, stream
+
+        except Exception as error:
+
+            last_error = error
+
+            error_text = str(error).lower()
+
+            retryable = any(
+                phrase in error_text
+                for phrase in [
+                    "429",
+                    "500",
+                    "503",
+                    "unavailable",
+                    "overloaded",
+                    "rate limit",
+                    "resource exhausted",
+                    "temporarily unavailable",
+                    "internal server error",
+                    "timeout",
+                    "deadline exceeded"
+                ]
+            )
+
+            if retryable:
+                time.sleep(0.5)
+                continue
+
+    raise Exception(
+        str(last_error)
+        if last_error
+        else "All Gemini models failed."
+    )
+
+
+def generate_normal_answer(prompt):
+    last_error = None
+
+    for model in MODELS:
+
+        for attempt in range(2):
 
             try:
 
@@ -183,11 +282,11 @@ def generate_answer(prompt):
                 error_text = str(error).lower()
 
                 retryable = any(
-                    text in error_text
-                    for text in [
+                    phrase in error_text
+                    for phrase in [
                         "429",
-                        "503",
                         "500",
+                        "503",
                         "unavailable",
                         "overloaded",
                         "rate limit",
@@ -199,8 +298,8 @@ def generate_answer(prompt):
                     ]
                 )
 
-                if retryable and attempt < 2:
-                    time.sleep(2 ** attempt)
+                if retryable and attempt == 0:
+                    time.sleep(0.5)
                     continue
 
                 break
@@ -213,7 +312,6 @@ def generate_answer(prompt):
 
 
 def read_file(path):
-
     lower_name = path.lower()
 
     if lower_name.endswith(".txt"):
@@ -278,7 +376,8 @@ def home():
 @app.route("/health")
 def health():
     return jsonify({
-        "status": "BHARAT AI is running"
+        "status": "BHARAT AI is running",
+        "streaming": True
     })
 
 
@@ -313,35 +412,30 @@ def register():
         )
 
         if not name:
-
             return jsonify({
                 "success": False,
                 "message": "Please enter the student's name."
             }), 400
 
         if not email or "@" not in email:
-
             return jsonify({
                 "success": False,
                 "message": "Please enter a valid email address."
             }), 400
 
         if not grade:
-
             return jsonify({
                 "success": False,
                 "message": "Please select a class."
             }), 400
 
         if len(password) < 6:
-
             return jsonify({
                 "success": False,
                 "message": "Password must be at least 6 characters."
             }), 400
 
         if not guardian_confirmed:
-
             return jsonify({
                 "success": False,
                 "message": "A parent or guardian must approve this student account."
@@ -359,7 +453,6 @@ def register():
         ).fetchone()
 
         if existing:
-
             db.close()
 
             return jsonify({
@@ -454,7 +547,6 @@ def login():
         )
 
         if not email or not password:
-
             return jsonify({
                 "success": False,
                 "message": "Please enter your email and password."
@@ -478,15 +570,12 @@ def login():
         db.close()
 
         if not student:
-
             return jsonify({
                 "success": False,
                 "message": "Incorrect email or password."
             }), 401
 
         session["student_id"] = student["id"]
-
-        status = get_status(student)
 
         return jsonify({
             "success": True,
@@ -496,7 +585,7 @@ def login():
                 "email": student["email"],
                 "grade": student["grade"]
             },
-            "status": status
+            "status": get_status(student)
         })
 
     except Exception as error:
@@ -530,13 +619,10 @@ def me():
     student = get_student()
 
     if not student:
-
         return jsonify({
             "success": True,
             "logged_in": False
         })
-
-    status = get_status(student)
 
     return jsonify({
         "success": True,
@@ -546,7 +632,7 @@ def me():
             "email": student["email"],
             "grade": student["grade"]
         },
-        "status": status
+        "status": get_status(student)
     })
 
 
@@ -556,7 +642,6 @@ def account_status():
     student = get_student()
 
     if not student:
-
         return jsonify({
             "success": False,
             "message": "Not logged in."
@@ -570,6 +655,99 @@ def account_status():
 
 @app.route("/ask", methods=["POST"])
 def ask():
+
+    student = get_student()
+
+    if not student:
+        return jsonify({
+            "success": False,
+            "answer": "Please log in before asking BHARAT AI a question."
+        }), 401
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+        question = str(
+            data.get("question", "")
+        ).strip()
+
+        if not question:
+            return jsonify({
+                "success": False,
+                "answer": "Please ask me a question."
+            }), 400
+
+        status = get_status(student)
+
+        if (
+            status["membership"] == "expired"
+            and not student["lifetime"]
+        ):
+            return jsonify({
+                "success": False,
+                "answer": "Your 7-day free trial has ended. Please activate BHARAT AI Lifetime Membership to continue."
+            }), 403
+
+        if (
+            status["daily_remaining"] <= 0
+            and not student["lifetime"]
+        ):
+            return jsonify({
+                "success": False,
+                "answer": f"You have reached today's limit of {DAILY_LIMIT} questions. Please try again tomorrow."
+            }), 429
+
+        prompt = build_prompt(
+            student,
+            question
+        )
+
+        answer = generate_normal_answer(
+            prompt
+        )
+
+        db = get_db()
+
+        db.execute(
+            """
+            UPDATE students
+            SET questions_today = questions_today + 1,
+                last_question_date = ?
+            WHERE id = ?
+            """,
+            (
+                datetime.utcnow().date().isoformat(),
+                student["id"]
+            )
+        )
+
+        db.commit()
+        db.close()
+
+        return jsonify({
+            "success": True,
+            "answer": answer
+        })
+
+    except Exception as error:
+
+        print(
+            "BHARAT AI ERROR:",
+            str(error),
+            flush=True
+        )
+
+        return jsonify({
+            "success": False,
+            "answer": "BHARAT AI is currently temporarily unavailable to answer. Please try again in a moment."
+        }), 500
+
+
+@app.route("/ask-stream", methods=["POST"])
+def ask_stream():
 
     student = get_student()
 
@@ -606,7 +784,7 @@ def ask():
 
             return jsonify({
                 "success": False,
-                "answer": "Your 7-day free trial has ended. Please activate BHARAT AI Lifetime Membership to continue."
+                "answer": "Your 7-day free trial has ended."
             }), 403
 
         if (
@@ -619,93 +797,98 @@ def ask():
                 "answer": f"You have reached today's limit of {DAILY_LIMIT} questions. Please try again tomorrow."
             }), 429
 
-        prompt = f"""
-You are BHARAT AI, a friendly AI tutor for students.
-
-Student name:
-{student["name"]}
-
-Student class:
-{student["grade"]}
-
-Explain things clearly and simply.
-
-Help the student understand the topic rather than only giving
-the final answer.
-
-Use step-by-step explanations when useful.
-
-You can communicate in:
-- English
-- Hindi
-- Hinglish
-
-Be accurate and honest.
-
-Student question:
-
-{question}
-"""
-
-        uploaded_text = session.get(
-            "uploaded_text",
-            ""
+        prompt = build_prompt(
+            student,
+            question
         )
-
-        if uploaded_text:
-
-            prompt += f"""
-
-The student has uploaded study material.
-
-Use it when relevant.
-
---- STUDY MATERIAL ---
-
-{uploaded_text[:50000]}
-
---- END STUDY MATERIAL ---
-"""
-
-        answer = generate_answer(prompt)
-
-        db = get_db()
-
-        today = datetime.utcnow().date().isoformat()
-
-        db.execute(
-            """
-            UPDATE students
-            SET questions_today = questions_today + 1,
-                last_question_date = ?
-            WHERE id = ?
-            """,
-            (
-                today,
-                student["id"]
-            )
-        )
-
-        db.commit()
-        db.close()
-
-        return jsonify({
-            "success": True,
-            "answer": answer
-        })
 
     except Exception as error:
 
-        print(
-            "BHARAT AI ERROR:",
-            str(error),
-            flush=True
-        )
-
         return jsonify({
             "success": False,
-            "answer": "BHARAT AI is currently temporarily unavailable to answer. Please try again in a moment."
+            "answer": str(error)
         }), 500
+
+
+    @stream_with_context
+    def generate():
+
+        full_answer = ""
+
+        try:
+
+            model, stream = get_model_stream(
+                prompt
+            )
+
+            yield "data: " + json.dumps({
+                "type": "start",
+                "model": model
+            }) + "\n\n"
+
+            for chunk in stream:
+
+                text = getattr(
+                    chunk,
+                    "text",
+                    None
+                )
+
+                if text:
+
+                    full_answer += text
+
+                    yield "data: " + json.dumps({
+                        "type": "text",
+                        "text": text
+                    }) + "\n\n"
+
+            if full_answer.strip():
+
+                db = get_db()
+
+                db.execute(
+                    """
+                    UPDATE students
+                    SET questions_today = questions_today + 1,
+                        last_question_date = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        datetime.utcnow().date().isoformat(),
+                        student["id"]
+                    )
+                )
+
+                db.commit()
+                db.close()
+
+            yield "data: " + json.dumps({
+                "type": "done"
+            }) + "\n\n"
+
+        except Exception as error:
+
+            print(
+                "STREAMING ERROR:",
+                str(error),
+                flush=True
+            )
+
+            yield "data: " + json.dumps({
+                "type": "error",
+                "message": "BHARAT AI is temporarily unavailable. Please try again."
+            }) + "\n\n"
+
+    return Response(
+        generate(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive"
+        }
+    )
 
 
 @app.route("/upload", methods=["POST"])
